@@ -5,14 +5,16 @@ import string, sys
 
 af = AllFonts()
 f = CurrentFont()
-fontList = []
 
-for f in af:
-	if f.info.familyName and f.info.styleName:
-		fontList.append(f.info.familyName + " " + f.info.styleName)
-	else:
-		sys.exit('All Open fonts must have familyName and styleName filled')
 
+def createFontList():
+	fontList = []
+	for f in af:
+		if f.info.familyName and f.info.styleName:
+			fontList.append(f.info.familyName + " " + f.info.styleName)
+		else:
+			return
+	return fontList
 		
 class AssignFontLayerWindow(object):
 	
@@ -27,8 +29,7 @@ class AssignFontLayerWindow(object):
 		self.w.textBox = TextBox((10, 130, -10, 30), "Layer Name in Target Font:")
 		self.w.editText = EditText((10, 160, -10, 30),
 							callback=self.editTextCallback)
-							
-							
+	
 		self.fontSourceName = fontList[0]
 		self.fontTargetName = fontList[0]
 		self.fontSourceIndex = 0
@@ -105,5 +106,8 @@ class AssignFontLayerWindow(object):
 				layerName += '_'
 		self.layerName = layerName
 
-
-AssignFontLayerWindow()
+fontList = createFontList()
+if fontList:
+	AssignFontLayerWindow()
+else:
+	print 'All open fonts must have familyName and styleName'
