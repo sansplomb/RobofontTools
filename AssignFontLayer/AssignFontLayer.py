@@ -25,8 +25,8 @@ class AssignFontLayerWindow(object):
 		self.w.popUpButtonTarget = PopUpButton((10, 90, -10, 30), fontList, callback=self.popUpButtonTargetCallback, sizeStyle = "regular")
 		
 		self.w.textBox = TextBox((10, 130, -10, 30), "Layer Name in Target Font:")
-		self.w.textEditor = TextEditor((10, 160, -10, 30),
-							callback=self.textEditorCallback)
+		self.w.editText = EditText((10, 160, -10, 30),
+							callback=self.editTextCallback)
 							
 							
 		self.fontSourceName = fontList[0]
@@ -42,7 +42,7 @@ class AssignFontLayerWindow(object):
 		self.w.buttonCancel = Button((110, -30, -10, -10), "Cancel",
 							callback=self.buttonCancelCallback)
 		self.layerName = "untitled_layer"
-		self.w.textEditor.set(self.layerName)
+		self.w.editText.set(self.layerName)
 		self.w.center()
 		self.w.open()
 		
@@ -94,7 +94,7 @@ class AssignFontLayerWindow(object):
 		self.fontTargetName = self.fontTargetList[sender.get()]
 		#print self.fontName
 		
-	def textEditorCallback(self, sender):
+	def editTextCallback(self, sender):
 
 		#layerName = sender.get().title()
 		layerName = ''
