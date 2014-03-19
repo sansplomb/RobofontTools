@@ -65,8 +65,10 @@ class AssignFontLayerWindow(object):
 		 			targetLayer = gT.getLayer(self.layerName)
 		 			#clear contours if any
 		 			targetLayer.clearContours()
+		 			targetWidth = gT.width
 		 			gT.flipLayers("foreground", self.layerName)
 					targetFont[gT.name] = gS.copy()
+					targetFont[gT.name].width = targetWidth
 					gT.flipLayers("foreground", self.layerName)
 		self.w.close()
 		 
