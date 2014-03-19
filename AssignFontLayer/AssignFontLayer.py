@@ -1,6 +1,6 @@
 from vanilla import *
 from robofab.pens.digestPen import *
-import string
+import string, sys
 
 
 af = AllFonts()
@@ -8,7 +8,11 @@ f = CurrentFont()
 fontList = []
 
 for f in af:
-	fontList.append(f.info.familyName + " " + f.info.styleName)
+	if f.info.familyName and f.info.styleName:
+		fontList.append(f.info.familyName + " " + f.info.styleName)
+	else:
+		sys.exit('All Open fonts must have familyName and styleName filled')
+
 		
 class AssignFontLayerWindow(object):
 	
