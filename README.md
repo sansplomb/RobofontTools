@@ -7,4 +7,6 @@ Tools for working in RoboFont
 
 <b>- ConvertSegments:</b> RoboFont scripts to convert selected lines to curves, and selected curves to lines.
 
-<b>- AssignFontLayer:</b> Robofont script window to copy all glyphs from a font to another font's new custom layer
+<b>- AssignFontLayer:</b> Robofont script window to copy all glyphs from a font to another font's new custom layer.
+
+<b>- Interpolate:</b> Robofont script window to interpolate between two masters into a new font.
