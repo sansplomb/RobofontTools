@@ -6,7 +6,7 @@ def computeInsertAttributes():
 		c = g.contours[c_index]
 		for s_index in range(len(c.segments)):
 			s = c.segments[s_index]
-			print s.type
+			#print s.type
 			if not s.selected:
 			    continue
 			if s.type == "line":
