@@ -211,7 +211,7 @@ class InterpolateWindow(object):
 		#print "slider edit!", sender.get()
 		self.scaleYValue = int(sender.get())
 		self.w.scaleYEditText.set(self.scaleYValue)
-		if self.keepStrokeX:
+		if self.keepStrokeY:
 			if self.sourceRefY != self.targetRefY:
 				interpolYValue = 1000*(self.sourceRefY *(100-self.scaleYValue)) / ((self.targetRefY - self.sourceRefY) * self.scaleYValue)
 			else:
