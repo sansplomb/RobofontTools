@@ -27,6 +27,24 @@ class InterpolateWindow(object):
 		self.interpolateYValue = 0
 		self.scaleXValue = 100
 		self.scaleYValue = 100
+		if len(af[self.fontSourceIndex].info.postscriptStemSnapH) != 0:
+			self.sourceRefX = af[self.fontSourceIndex].info.postscriptStemSnapH[0]
+		else:
+			self.sourceRefX = 0
+		if len(af[self.fontSourceIndex].info.postscriptStemSnapV) != 0:
+			self.sourceRefY = af[self.fontSourceIndex].info.postscriptStemSnapV[0]
+		else:
+			self.sourceRefY = 0
+			
+		if len(af[self.fontTargetIndex].info.postscriptStemSnapH) != 0:
+			self.targetRefX = af[self.fontTargetIndex].info.postscriptStemSnapH[0]
+		else:
+			self.targetRefX = 0
+		if len(af[self.fontTargetIndex].info.postscriptStemSnapV) != 0:
+			self.targetRefY = af[self.fontTargetIndex].info.postscriptStemSnapV[0]
+		else:
+			self.targetRefY = 0
+		
 		self.sourceLayerList = af[self.fontSourceIndex].layerOrder
 		self.targetLayerList = af[self.fontTargetIndex].layerOrder
 		self.sourceLayerName = self.sourceLayerList[0]
@@ -34,62 +52,78 @@ class InterpolateWindow(object):
 		self.useSourceLayer = False
 		self.useTargetLayer = False
 		
-		self.w = FloatingWindow((400, 500), "Interpolate")
-		self.w.textBoxSource = TextBox((10, 10, 190, 20), "Master Font 1:")
+		self.w = FloatingWindow((500, 500), "Interpolate")
+		self.w.textBoxSource = TextBox((10, 10, 190, 20), "Master Font 1")
 		self.w.popUpButtonSource = PopUpButton((10, 30, 190, 20), fontList, callback=self.popUpButtonSourceCallback, sizeStyle = "regular")
 		
-		self.w.textBoxSourceLayer = TextBox((210, 10, -10, 20), "Layer:")
-		self.w.popUpButtonSourceLayer = PopUpButton((210, 30, -10, 20), self.sourceLayerList, callback=self.popUpButtonSourceLayerCallback, sizeStyle = "regular")
+		self.w.textBoxSourceLayer = TextBox((210, 10, 150, 20), "Layer")
+		self.w.popUpButtonSourceLayer = PopUpButton((210, 30, 150, 20), self.sourceLayerList, callback=self.popUpButtonSourceLayerCallback, sizeStyle = "regular")
 		self.w.textBoxSourceLayer.show(self.useSourceLayer)
 		self.w.popUpButtonSourceLayer.show(self.useSourceLayer)
-		self.w.foregroundSourceCheckBox = CheckBox((10, 50, -10, 20), "Use Layer",
-                           callback=self.foregroundSourceCheckBoxCallback, value=self.useSourceLayer)
+		
+		self.w.textBoxSourceRefX = TextBox((370, 10, 50, 20), "Stem X")
+		self.w.textBoxSourceRefY = TextBox((425, 10, 50, 20), "Stem Y")
+		self.w.sourceRefXEditText = EditText((370, 30, 45, 20),
+							callback=self.sourceRefXEditTextCallback)
+		self.w.sourceRefYEditText = EditText((425, 30, 45, 20),
+							callback=self.sourceRefYEditTextCallback)
+		
+		self.w.foregroundSourceCheckBox = CheckBox((10, 50, 150, 20), "Use Layer",
+						   callback=self.foregroundSourceCheckBoxCallback, value=self.useSourceLayer)
 
-		self.w.textBoxTarget = TextBox((10, 70, 190, 20), "Master Font 2:")
+		self.w.textBoxTarget = TextBox((10, 70, 190, 20), "Master Font 2")
 		self.w.popUpButtonTarget = PopUpButton((10, 90, 190, 20), fontList, callback=self.popUpButtonTargetCallback, sizeStyle = "regular")
 		
-		self.w.textBoxTargetLayer = TextBox((210, 70, -10, 20), "Layer:")
-		self.w.popUpButtonTargetLayer = PopUpButton((210, 90, -10, 20), self.targetLayerList, callback=self.popUpButtonTargetLayerCallback, sizeStyle = "regular")
+		self.w.textBoxTargetLayer = TextBox((210, 70, -10, 20), "Layer")
+		self.w.popUpButtonTargetLayer = PopUpButton((210, 90, 150, 20), self.targetLayerList, callback=self.popUpButtonTargetLayerCallback, sizeStyle = "regular")
 		self.w.textBoxTargetLayer.show(self.useTargetLayer)
 		self.w.popUpButtonTargetLayer.show(self.useTargetLayer)
-		self.w.foregroundTargetCheckBox = CheckBox((10, 110, -10, 20), "Use Layer",
-                           callback=self.foregroundTargetCheckBoxCallback, value=self.useTargetLayer)
 		
-		self.w.interpolateXTextBox = TextBox((10, 150, -10, 20), "Interpolate X:")
+		self.w.textBoxTargetRefX = TextBox((370, 70, 50, 20), "Stem X")
+		self.w.textBoxTargetRefY = TextBox((425, 70, 50, 20), "Stem Y")
+		self.w.targetRefXEditText = EditText((370, 90, 45, 20),
+							callback=self.targetRefXEditTextCallback)
+		self.w.targetRefYEditText = EditText((425, 90, 45, 20),
+							callback=self.targetRefYEditTextCallback)
+		
+		self.w.foregroundTargetCheckBox = CheckBox((10, 110, 150, 20), "Use Layer",
+						   callback=self.foregroundTargetCheckBoxCallback, value=self.useTargetLayer)
+		
+		self.w.interpolateXTextBox = TextBox((10, 150, -10, 20), "Interpolate X")
 		self.w.interpolateXEditText = EditText((100, 150, 60, 20),
 							callback=self.interpolateXEditTextCallback)
 		self.w.interpolateXSlider = Slider((10, 180, -10, 23),
-							tickMarkCount=10,
+							tickMarkCount=7,
 							value = 0,
 							maxValue = 2000,
 							minValue = -1000,
 							callback=self.interpolateXSliderCallback)
 							
-		self.w.interpolateYTextBox = TextBox((10, 210, -10, 20), "Interpolate Y:")
+		self.w.interpolateYTextBox = TextBox((10, 210, -10, 20), "Interpolate Y")
 		self.w.interpolateYEditText = EditText((100, 210, 60, 20),
 							callback=self.interpolateYEditTextCallback)
 		self.w.interpolateYSlider = Slider((10, 240, -10, 23),
-							tickMarkCount=10,
+							tickMarkCount=7,
 							value = 0,
 							maxValue = 2000,
 							minValue = -1000,
 							callback=self.interpolateYSliderCallback)
 							
-		self.w.scaleXTextBox = TextBox((10, 290, -10, 20), "Scale X (%):")
+		self.w.scaleXTextBox = TextBox((10, 290, -10, 20), "Scale X (%)")
 		self.w.scaleXEditText = EditText((100, 290, 60, 20),
 							callback=self.scaleXEditTextCallback)
 		self.w.scaleXSlider = Slider((10, 320, -10, 23),
-							tickMarkCount=10,
+							tickMarkCount=5,
 							value = 100,
 							maxValue = 200,
 							minValue = 1,
 							callback=self.scaleXSliderCallback)
 		
-		self.w.scaleYTextBox = TextBox((10, 360, -10, 20), "Scale Y (%):")
+		self.w.scaleYTextBox = TextBox((10, 360, -10, 20), "Scale Y (%)")
 		self.w.scaleYEditText = EditText((100, 360, 60, 20),
 							callback=self.scaleYEditTextCallback)
 		self.w.scaleYSlider = Slider((10, 390, -10, 23),
-							tickMarkCount=10,
+							tickMarkCount=5,
 							value = 100,
 							maxValue = 200,
 							minValue = 1,
@@ -109,9 +143,25 @@ class InterpolateWindow(object):
 		self.w.interpolateYEditText.set(self.interpolateYValue)
 		self.w.scaleXEditText.set(self.scaleXValue)
 		self.w.scaleYEditText.set(self.scaleYValue)
+		self.w.sourceRefXEditText.set(self.sourceRefX)
+		self.w.sourceRefYEditText.set(self.sourceRefY)
+		self.w.targetRefXEditText.set(self.targetRefX)
+		self.w.targetRefYEditText.set(self.targetRefY)
+		
 		self.w.center()
 		self.w.open()
 		self.newFont = RFont()
+		
+	def resetAll(self):
+		self.w.interpolateXEditText.set(0)
+		self.w.interpolateYEditText.set(0)
+		self.w.scaleXEditText.set(100)
+		self.w.scaleYEditText.set(100)
+		self.w.interpolateXSlider.set(0)
+		self.w.interpolateYSlider.set(0)
+		self.w.scaleXSlider.set(100)
+		self.w.scaleYSlider.set(100)
+		
 		
 	def foregroundSourceCheckBoxCallback(self, sender):
 		self.w.popUpButtonSourceLayer.show(sender.get())
@@ -137,11 +187,25 @@ class InterpolateWindow(object):
 		#print "slider edit!", sender.get()
 		self.scaleXValue = int(sender.get())
 		self.w.scaleXEditText.set(self.scaleXValue)
+		if self.sourceRefX != self.targetRefX:
+			interpolXValue = 1000*(self.sourceRefX *(100-self.scaleXValue)) / ((self.targetRefX - self.sourceRefX) * self.scaleXValue)
+		else:
+			interpolXValue = 0
+		self.interpolateXValue = int(interpolXValue)
+		self.w.interpolateXEditText.set(self.interpolateXValue)
+		self.w.interpolateXSlider.set(self.interpolateXValue)
 	
 	def scaleYSliderCallback(self, sender):
 		#print "slider edit!", sender.get()
 		self.scaleYValue = int(sender.get())
 		self.w.scaleYEditText.set(self.scaleYValue)
+		if self.sourceRefY != self.targetRefY:
+			interpolYValue = 1000*(self.sourceRefY *(100-self.scaleYValue)) / ((self.targetRefY - self.sourceRefY) * self.scaleYValue)
+		else:
+			interpolYValue = 0
+		self.interpolateYValue = int(interpolYValue)
+		self.w.interpolateYEditText.set(self.interpolateYValue)
+		self.w.interpolateYSlider.set(self.interpolateYValue)
 		
 	def interpol(self, gS, gT, valueX, valueY):
 		gI = gS.copy()
@@ -153,7 +217,147 @@ class InterpolateWindow(object):
 				gI[i].points[j].y = (sourcePoint[1] + ((targetPoint[1] - sourcePoint[1]) * valueY/1000)) * self.scaleYValue/100
 				gI.width = (gS.width + ((gT.width - gS.width) * valueX/1000)) * self.scaleXValue/100
 		return gI
-    
+	
+		
+	def popUpButtonSourceCallback(self, sender):		
+		self.resetAll()
+		self.fontSourceIndex = sender.get()
+		self.fontSourceName = self.fontSourceList[sender.get()]
+		self.w.popUpButtonSourceLayer.setItems(af[self.fontSourceIndex].layerOrder)
+		self.sourceLayerList = af[self.fontSourceIndex].layerOrder
+		self.sourceLayerName = self.sourceLayerList[0]
+		if len(af[self.fontSourceIndex].info.postscriptStemSnapH) != 0:
+			self.sourceRefX = af[self.fontSourceIndex].info.postscriptStemSnapH[0]
+		else:
+			self.sourceRefX = 0
+		self.w.sourceRefXEditText.set(self.sourceRefX)
+		if len(af[self.fontSourceIndex].info.postscriptStemSnapV) != 0:
+			self.sourceRefY = af[self.fontSourceIndex].info.postscriptStemSnapV[0]
+		else:
+			self.sourceRefY = 0
+		self.w.sourceRefYEditText.set(self.sourceRefY)
+		
+	def popUpButtonTargetCallback(self, sender):
+		self.resetAll()		
+		self.fontTargetIndex = sender.get()
+		self.fontTargetName = self.fontTargetList[sender.get()]
+		self.w.popUpButtonTargetLayer.setItems(af[self.fontTargetIndex].layerOrder)
+		self.targetLayerList = af[self.fontTargetIndex].layerOrder
+		self.targetLayerName = self.targetLayerList[0]
+		if len(af[self.fontTargetIndex].info.postscriptStemSnapH) != 0:
+			self.targetRefX = af[self.fontTargetIndex].info.postscriptStemSnapH[0]
+		else:
+			self.targetRefX = 0
+		self.w.targetRefXEditText.set(self.targetRefX)
+		if len(af[self.fontTargetIndex].info.postscriptStemSnapV) != 0:
+			self.targetRefY = af[self.fontTargetIndex].info.postscriptStemSnapV[0]
+		else:
+			self.targetRefY = 0
+		self.w.targetRefYEditText.set(self.targetRefY)
+
+		
+	def popUpButtonSourceLayerCallback(self, sender):
+		self.sourceLayerIndex = sender.get()
+		self.sourceLayerName = self.sourceLayerList[self.sourceLayerIndex]
+		
+	def popUpButtonTargetLayerCallback(self, sender):
+		self.targetLayerIndex = sender.get()
+		self.targetLayerName = self.targetLayerList[self.targetLayerIndex]
+	
+	def isInteger(self, string):
+		try:
+			return int(string)
+		except ValueError:
+			return 0
+			
+	def sourceRefXEditTextCallback(self, sender):
+		try:
+			newValue = int(sender.get())
+		except ValueError:
+			newValue = 0
+			sender.set(0)
+		self.sourceRefX = newValue
+		
+	def sourceRefYEditTextCallback(self, sender):
+		try:
+			newValue = int(sender.get())
+		except ValueError:
+			newValue = 0
+			sender.set(0)
+		self.sourceRefY = newValue
+		
+	def targetRefXEditTextCallback(self, sender):
+		try:
+			newValue = int(sender.get())
+		except ValueError:
+			newValue = 0
+			sender.set(0)
+		self.targetRefX = newValue
+		
+	def targetRefYEditTextCallback(self, sender):
+		try:
+			newValue = int(sender.get())
+		except ValueError:
+			newValue = 0
+			sender.set(0)
+		self.targetRefY = newValue
+	
+	def interpolateXEditTextCallback(self, sender):
+		try:
+			newValue = int(sender.get())
+		except ValueError:
+			if sender.get() == '-':
+				newValue = 0
+			else:
+				newValue = 0
+				sender.set(0)
+		self.w.interpolateXSlider.set(newValue)
+		self.interpolateXValue = newValue
+		
+	def interpolateYEditTextCallback(self, sender):
+		try:
+			newValue = int(sender.get())
+		except ValueError:
+			if sender.get() == '-':
+				newValue = 0
+			else:
+				newValue = 0
+				sender.set(0)
+		self.w.interpolateYSlider.set(newValue)
+		self.interpolateYValue = newValue
+		
+	def scaleXEditTextCallback(self, sender):
+		try:
+			newValue = int(sender.get())
+		except ValueError:
+			newValue = 1
+			sender.set(1)
+		self.w.scaleXSlider.set(newValue)
+		self.scaleXValue = newValue
+		if self.sourceRefX != self.targetRefX:
+			interpolXValue = 1000*(self.sourceRefX *(100-self.scaleXValue)) / ((self.targetRefX - self.sourceRefX) * self.scaleXValue)
+		else:
+			interpolXValue = 0
+		self.interpolateXValue = int(interpolXValue)
+		self.w.interpolateXEditText.set(self.interpolateXValue)
+		self.w.interpolateXSlider.set(self.interpolateXValue)
+		
+	def scaleYEditTextCallback(self, sender):
+		try:
+			newValue = int(sender.get())
+		except ValueError:
+			newValue = 1
+			sender.set(1)
+		self.w.scaleYSlider.set(newValue)
+		self.scaleYValue = newValue
+		if self.sourceRefY != self.targetRefY:
+			interpolYValue = 1000*(self.sourceRefY *(100-self.scaleYValue)) / ((self.targetRefY - self.sourceRefY) * self.scaleYValue)
+		else:
+			interpolYValue = 0
+		self.interpolateYValue = int(interpolYValue)
+		self.w.interpolateYEditText.set(self.interpolateYValue)
+		self.w.interpolateYSlider.set(self.interpolateYValue)
+		
 	def buttonOKCallback(self, sender):
 		 #print "Ok"
 		if len(self.newFont) != 0:
@@ -168,22 +372,12 @@ class InterpolateWindow(object):
 		sourceFont = af[self.fontSourceIndex]
 		targetFont = af[self.fontTargetIndex]
 		
-		#print "Master 1:", sourceFont
-		#print "|--layer:", self.sourceLayerName
-		#print "Master 2:", targetFont
-		#print "|--layer:", self.targetLayerName
-		 
-		 #get the first glyph's name
-		#firstGlyphName = targetFont.keys()[0]
-		 #parse the target font's glyphs
 		barIncrement = 100/len(targetFont)
 		for gT in targetFont:
-		 	#parse the source font's glyphs
 			for gS in sourceFont:
-		 		#if their names match, I want the targetLayer to be a copy of the sourceLayer
 				if gT.name == gS.name:
-					
 					self.w.bar.increment(barIncrement)
+					
 					#Collect Master1 points
 					self.allSourcePoints = []
 					self.allSourcePointsLength = []
@@ -234,84 +428,6 @@ class InterpolateWindow(object):
 	def buttonCancelCallback(self, sender):
 		 #print "Cancel"
 		 self.w.close()
-		
-	def popUpButtonSourceCallback(self, sender):		
-		self.fontSourceIndex = sender.get()
-		self.fontSourceName = self.fontSourceList[sender.get()]
-		self.w.popUpButtonSourceLayer.setItems(af[self.fontSourceIndex].layerOrder)
-		self.sourceLayerList = af[self.fontSourceIndex].layerOrder
-		self.sourceLayerName = self.sourceLayerList[0]
-		
-		
-	def popUpButtonTargetCallback(self, sender):		
-		self.fontTargetIndex = sender.get()
-		self.fontTargetName = self.fontTargetList[sender.get()]
-		self.w.popUpButtonTargetLayer.setItems(af[self.fontTargetIndex].layerOrder)
-		self.targetLayerList = af[self.fontTargetIndex].layerOrder
-		self.targetLayerName = self.targetLayerList[0]
-
-		
-	def popUpButtonSourceLayerCallback(self, sender):
-		self.sourceLayerIndex = sender.get()
-		self.sourceLayerName = self.sourceLayerList[self.sourceLayerIndex]
-		
-	def popUpButtonTargetLayerCallback(self, sender):
-		self.targetLayerIndex = sender.get()
-		self.targetLayerName = self.targetLayerList[self.targetLayerIndex]
-	
-	def isInteger(self, string):
-		try:
-			return int(string)
-		except ValueError:
-			return 0
-	
-	def interpolateXEditTextCallback(self, sender):
-		try:
-			newValue = int(sender.get())
-		except ValueError:
-			if sender.get() == '-':
-				newValue = 0
-			else:
-				newValue = 0
-				sender.set(0)
-		self.w.interpolateXSlider.set(newValue)
-		self.interpolateXValue = newValue
-		
-	def interpolateYEditTextCallback(self, sender):
-		try:
-			newValue = int(sender.get())
-		except ValueError:
-			if sender.get() == '-':
-				newValue = 0
-			else:
-				newValue = 0
-				sender.set(0)
-		self.w.interpolateYSlider.set(newValue)
-		self.interpolateYValue = newValue
-		
-	def scaleXEditTextCallback(self, sender):
-		try:
-			newValue = int(sender.get())
-		except ValueError:
-			if sender.get() == '-':
-				newValue = 0
-			else:
-				newValue = 0
-				sender.set(0)
-		self.w.scaleXSlider.set(newValue)
-		self.scaleXValue = newValue
-		
-	def scaleYEditTextCallback(self, sender):
-		try:
-			newValue = int(sender.get())
-		except ValueError:
-			if sender.get() == '-':
-				newValue = 0
-			else:
-				newValue = 0
-				sender.set(0)
-		self.w.scaleYSlider.set(newValue)
-		self.scaleYValue = newValue
 
 
 fontList = createFontList()
