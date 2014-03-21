@@ -51,9 +51,11 @@ class InterpolateWindow(object):
 		self.targetLayerName = self.targetLayerList[0]
 		self.useSourceLayer = False
 		self.useTargetLayer = False
+		self.keepStrokeX = True
+		self.keepStrokeY = True
 		
 		self.w = FloatingWindow((500, 500), "Interpolate")
-		self.w.textBoxSource = TextBox((10, 10, 190, 20), "Master Font 1")
+		self.w.textBoxSource = TextBox((10, 10, 190, 20), "First Master")
 		self.w.popUpButtonSource = PopUpButton((10, 30, 190, 20), fontList, callback=self.popUpButtonSourceCallback, sizeStyle = "regular")
 		
 		self.w.textBoxSourceLayer = TextBox((210, 10, 150, 20), "Layer")
@@ -71,7 +73,7 @@ class InterpolateWindow(object):
 		self.w.foregroundSourceCheckBox = CheckBox((10, 50, 150, 20), "Use Layer",
 						   callback=self.foregroundSourceCheckBoxCallback, value=self.useSourceLayer)
 
-		self.w.textBoxTarget = TextBox((10, 70, 190, 20), "Master Font 2")
+		self.w.textBoxTarget = TextBox((10, 70, 190, 20), "Second Master")
 		self.w.popUpButtonTarget = PopUpButton((10, 90, 190, 20), fontList, callback=self.popUpButtonTargetCallback, sizeStyle = "regular")
 		
 		self.w.textBoxTargetLayer = TextBox((210, 70, -10, 20), "Layer")
@@ -112,6 +114,8 @@ class InterpolateWindow(object):
 		self.w.scaleXTextBox = TextBox((10, 290, -10, 20), "Scale X (%)")
 		self.w.scaleXEditText = EditText((100, 290, 60, 20),
 							callback=self.scaleXEditTextCallback)
+		self.w.keepStrokeXCheckBox = CheckBox((170, 290, 200, 20), "keep stem of first Master",
+						   callback=self.keepStrokeXCheckBoxCallback, value=self.keepStrokeX)
 		self.w.scaleXSlider = Slider((10, 320, -10, 23),
 							tickMarkCount=5,
 							value = 100,
@@ -122,6 +126,8 @@ class InterpolateWindow(object):
 		self.w.scaleYTextBox = TextBox((10, 360, -10, 20), "Scale Y (%)")
 		self.w.scaleYEditText = EditText((100, 360, 60, 20),
 							callback=self.scaleYEditTextCallback)
+		self.w.keepStrokeYCheckBox = CheckBox((170, 360, 200, 20), "keep stem of first Master",
+						   callback=self.keepStrokeYCheckBoxCallback, value=self.keepStrokeY)
 		self.w.scaleYSlider = Slider((10, 390, -10, 23),
 							tickMarkCount=5,
 							value = 100,
@@ -161,7 +167,12 @@ class InterpolateWindow(object):
 		self.w.interpolateYSlider.set(0)
 		self.w.scaleXSlider.set(100)
 		self.w.scaleYSlider.set(100)
-		
+	
+	def keepStrokeXCheckBoxCallback(self, sender):
+		self.keepStrokeX = sender.get()
+	
+	def keepStrokeYCheckBoxCallback(self, sender):
+		self.keepStrokeY = sender.get()
 		
 	def foregroundSourceCheckBoxCallback(self, sender):
 		self.w.popUpButtonSourceLayer.show(sender.get())
@@ -187,25 +198,27 @@ class InterpolateWindow(object):
 		#print "slider edit!", sender.get()
 		self.scaleXValue = int(sender.get())
 		self.w.scaleXEditText.set(self.scaleXValue)
-		if self.sourceRefX != self.targetRefX:
-			interpolXValue = 1000*(self.sourceRefX *(100-self.scaleXValue)) / ((self.targetRefX - self.sourceRefX) * self.scaleXValue)
-		else:
-			interpolXValue = 0
-		self.interpolateXValue = int(interpolXValue)
-		self.w.interpolateXEditText.set(self.interpolateXValue)
-		self.w.interpolateXSlider.set(self.interpolateXValue)
+		if self.keepStrokeX:
+			if self.sourceRefX != self.targetRefX:
+				interpolXValue = 1000*(self.sourceRefX *(100-self.scaleXValue)) / ((self.targetRefX - self.sourceRefX) * self.scaleXValue)
+			else:
+				interpolXValue = 0
+			self.interpolateXValue = int(interpolXValue)
+			self.w.interpolateXEditText.set(self.interpolateXValue)
+			self.w.interpolateXSlider.set(self.interpolateXValue)
 	
 	def scaleYSliderCallback(self, sender):
 		#print "slider edit!", sender.get()
 		self.scaleYValue = int(sender.get())
 		self.w.scaleYEditText.set(self.scaleYValue)
-		if self.sourceRefY != self.targetRefY:
-			interpolYValue = 1000*(self.sourceRefY *(100-self.scaleYValue)) / ((self.targetRefY - self.sourceRefY) * self.scaleYValue)
-		else:
-			interpolYValue = 0
-		self.interpolateYValue = int(interpolYValue)
-		self.w.interpolateYEditText.set(self.interpolateYValue)
-		self.w.interpolateYSlider.set(self.interpolateYValue)
+		if self.keepStrokeX:
+			if self.sourceRefY != self.targetRefY:
+				interpolYValue = 1000*(self.sourceRefY *(100-self.scaleYValue)) / ((self.targetRefY - self.sourceRefY) * self.scaleYValue)
+			else:
+				interpolYValue = 0
+			self.interpolateYValue = int(interpolYValue)
+			self.w.interpolateYEditText.set(self.interpolateYValue)
+			self.w.interpolateYSlider.set(self.interpolateYValue)
 		
 	def interpol(self, gS, gT, valueX, valueY):
 		gI = gS.copy()
@@ -334,13 +347,14 @@ class InterpolateWindow(object):
 			sender.set(1)
 		self.w.scaleXSlider.set(newValue)
 		self.scaleXValue = newValue
-		if self.sourceRefX != self.targetRefX:
-			interpolXValue = 1000*(self.sourceRefX *(100-self.scaleXValue)) / ((self.targetRefX - self.sourceRefX) * self.scaleXValue)
-		else:
-			interpolXValue = 0
-		self.interpolateXValue = int(interpolXValue)
-		self.w.interpolateXEditText.set(self.interpolateXValue)
-		self.w.interpolateXSlider.set(self.interpolateXValue)
+		if self.keepStrokeX:
+			if self.sourceRefX != self.targetRefX:
+				interpolXValue = 1000*(self.sourceRefX *(100-self.scaleXValue)) / ((self.targetRefX - self.sourceRefX) * self.scaleXValue)
+			else:
+				interpolXValue = 0
+			self.interpolateXValue = int(interpolXValue)
+			self.w.interpolateXEditText.set(self.interpolateXValue)
+			self.w.interpolateXSlider.set(self.interpolateXValue)
 		
 	def scaleYEditTextCallback(self, sender):
 		try:
@@ -350,13 +364,14 @@ class InterpolateWindow(object):
 			sender.set(1)
 		self.w.scaleYSlider.set(newValue)
 		self.scaleYValue = newValue
-		if self.sourceRefY != self.targetRefY:
-			interpolYValue = 1000*(self.sourceRefY *(100-self.scaleYValue)) / ((self.targetRefY - self.sourceRefY) * self.scaleYValue)
-		else:
-			interpolYValue = 0
-		self.interpolateYValue = int(interpolYValue)
-		self.w.interpolateYEditText.set(self.interpolateYValue)
-		self.w.interpolateYSlider.set(self.interpolateYValue)
+		if self.keepStrokeX:
+			if self.sourceRefY != self.targetRefY:
+				interpolYValue = 1000*(self.sourceRefY *(100-self.scaleYValue)) / ((self.targetRefY - self.sourceRefY) * self.scaleYValue)
+			else:
+				interpolYValue = 0
+			self.interpolateYValue = int(interpolYValue)
+			self.w.interpolateYEditText.set(self.interpolateYValue)
+			self.w.interpolateYSlider.set(self.interpolateYValue)
 		
 	def buttonOKCallback(self, sender):
 		 #print "Ok"
