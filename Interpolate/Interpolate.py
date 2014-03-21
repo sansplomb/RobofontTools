@@ -183,9 +183,14 @@ class InterpolateWindow(object):
 	
 	def keepStrokeXCheckBoxCallback(self, sender):
 		self.keepStrokeX = sender.get()
+		if self.keepStrokeX:
+			self.setInterpolateX()
+			
 	
 	def keepStrokeYCheckBoxCallback(self, sender):
 		self.keepStrokeY = sender.get()
+		if self.keepStrokeY:
+			self.setInterpolateY()
 		
 	def foregroundSourceCheckBoxCallback(self, sender):
 		self.w.popUpButtonSourceLayer.show(sender.get())
@@ -207,10 +212,7 @@ class InterpolateWindow(object):
 		self.interpolateYValue = int(sender.get())
 		self.w.interpolateYEditText.set(self.interpolateYValue)
 	
-	def scaleXSliderCallback(self, sender):
-		#print "slider edit!", sender.get()
-		self.scaleXValue = int(sender.get())
-		self.w.scaleXEditText.set(self.scaleXValue)
+	def setInterpolateX(self):
 		if self.keepStrokeX:
 			if self.sourceRefX != self.targetRefX:
 				interpolXValue = 1000*(self.sourceRefX *(100-self.scaleXValue)) / ((self.targetRefX - self.sourceRefX) * self.scaleXValue)
@@ -219,11 +221,8 @@ class InterpolateWindow(object):
 			self.interpolateXValue = int(interpolXValue)
 			self.w.interpolateXEditText.set(self.interpolateXValue)
 			self.w.interpolateXSlider.set(self.interpolateXValue)
-	
-	def scaleYSliderCallback(self, sender):
-		#print "slider edit!", sender.get()
-		self.scaleYValue = int(sender.get())
-		self.w.scaleYEditText.set(self.scaleYValue)
+			
+	def setInterpolateY(self):
 		if self.keepStrokeY:
 			if self.sourceRefY != self.targetRefY:
 				interpolYValue = 1000*(self.sourceRefY *(100-self.scaleYValue)) / ((self.targetRefY - self.sourceRefY) * self.scaleYValue)
@@ -233,16 +232,18 @@ class InterpolateWindow(object):
 			self.w.interpolateYEditText.set(self.interpolateYValue)
 			self.w.interpolateYSlider.set(self.interpolateYValue)
 		
-	def interpol(self, gS, gT, valueX, valueY):
-		gI = gS.copy()
-		for i in range(len(gS)):
-			for j in range(len(gS[i].points)):
-				sourcePoint = self.allSourcePoints[i][j]
-				targetPoint = self.allTargetPoints[i][j]
-				gI[i].points[j].x = (sourcePoint[0] + ((targetPoint[0] - sourcePoint[0]) * valueX/1000)) * self.scaleXValue/100
-				gI[i].points[j].y = (sourcePoint[1] + ((targetPoint[1] - sourcePoint[1]) * valueY/1000)) * self.scaleYValue/100
-				gI.width = (gS.width + ((gT.width - gS.width) * valueX/1000)) * self.scaleXValue/100
-		return gI
+	def scaleXSliderCallback(self, sender):
+		#print "slider edit!", sender.get()
+		self.scaleXValue = int(sender.get())
+		self.w.scaleXEditText.set(self.scaleXValue)
+		self.setInterpolateX()
+		
+	
+	def scaleYSliderCallback(self, sender):
+		#print "slider edit!", sender.get()
+		self.scaleYValue = int(sender.get())
+		self.w.scaleYEditText.set(self.scaleYValue)
+		self.setInterpolateY()
 	
 		
 	def popUpButtonSourceCallback(self, sender):		
@@ -358,16 +359,12 @@ class InterpolateWindow(object):
 		except ValueError:
 			newValue = 1
 			sender.set(1)
+		if newValue == 0:
+			newValue = 1
+			sender.set(1)
 		self.w.scaleXSlider.set(newValue)
 		self.scaleXValue = newValue
-		if self.keepStrokeX:
-			if self.sourceRefX != self.targetRefX:
-				interpolXValue = 1000*(self.sourceRefX *(100-self.scaleXValue)) / ((self.targetRefX - self.sourceRefX) * self.scaleXValue)
-			else:
-				interpolXValue = 0
-			self.interpolateXValue = int(interpolXValue)
-			self.w.interpolateXEditText.set(self.interpolateXValue)
-			self.w.interpolateXSlider.set(self.interpolateXValue)
+		self.setInterpolateX()
 		
 	def scaleYEditTextCallback(self, sender):
 		try:
@@ -375,16 +372,23 @@ class InterpolateWindow(object):
 		except ValueError:
 			newValue = 1
 			sender.set(1)
+		if newValue == 0:
+			newValue = 1
+			sender.set(1)
 		self.w.scaleYSlider.set(newValue)
 		self.scaleYValue = newValue
-		if self.keepStrokeX:
-			if self.sourceRefY != self.targetRefY:
-				interpolYValue = 1000*(self.sourceRefY *(100-self.scaleYValue)) / ((self.targetRefY - self.sourceRefY) * self.scaleYValue)
-			else:
-				interpolYValue = 0
-			self.interpolateYValue = int(interpolYValue)
-			self.w.interpolateYEditText.set(self.interpolateYValue)
-			self.w.interpolateYSlider.set(self.interpolateYValue)
+		self.setInterpolateY()
+	
+	def interpol(self, gS, gT, valueX, valueY):
+		gI = gS.copy()
+		for i in range(len(gS)):
+			for j in range(len(gS[i].points)):
+				sourcePoint = self.allSourcePoints[i][j]
+				targetPoint = self.allTargetPoints[i][j]
+				gI[i].points[j].x = (sourcePoint[0] + ((targetPoint[0] - sourcePoint[0]) * valueX/1000)) * self.scaleXValue/100
+				gI[i].points[j].y = (sourcePoint[1] + ((targetPoint[1] - sourcePoint[1]) * valueY/1000)) * self.scaleYValue/100
+				gI.width = (gS.width + ((gT.width - gS.width) * valueX/1000)) * self.scaleXValue/100
+		return gI
 			
 	def collaPolate(self, gS, gT, barIncrement):
 		self.w.bar.increment(barIncrement)
@@ -423,8 +427,8 @@ class InterpolateWindow(object):
 		#print allTargetPoints
 		if self.allSourcePointsLength != self.allTargetPointsLength:
 			print 'Warning: Glyph ' + gS.name + ' not matching'
-			#print self.allSourcePointsLength
-			#print self.allTargetPointsLength
+			print self.allSourcePoints
+			print self.allTargetPoints
 		else:
 			gI = self.interpol(gS, gT, self.interpolateXValue, self.interpolateYValue)		
 			self.newFont.newGlyph(gI.name)
