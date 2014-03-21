@@ -53,8 +53,10 @@ class InterpolateWindow(object):
 		self.useTargetLayer = False
 		self.keepStrokeX = True
 		self.keepStrokeY = True
+		self.limitGlyphSet = False
+		self.selectedGlyphSet = ''
 		
-		self.w = FloatingWindow((500, 500), "Interpolate")
+		self.w = FloatingWindow((500, 600), "Interpolate")
 		self.w.textBoxSource = TextBox((10, 10, 190, 20), "First Master")
 		self.w.popUpButtonSource = PopUpButton((10, 30, 190, 20), fontList, callback=self.popUpButtonSourceCallback, sizeStyle = "regular")
 		
@@ -135,7 +137,12 @@ class InterpolateWindow(object):
 							minValue = 1,
 							callback=self.scaleYSliderCallback)
 							
-		self.w.bar = ProgressBar((10, 430, -10, 16), sizeStyle='small')
+		self.w.glyphSetCheckBox = CheckBox((10, 420, -10, 20), "Apply only on glyph set:",
+								callback=self.glyphSetCheckBoxCallback, value=self.limitGlyphSet)
+		self.w.glyphSetTextEditor = TextEditor((10, 440, -10, 90),
+							callback=self.glyphSetTextEditorCallback)
+							
+		self.w.bar = ProgressBar((10, -60, -10, 16), sizeStyle='small')
 			
 		self.fontSourceList = self.w.popUpButtonSource.getItems()
 		self.fontTargetList = self.w.popUpButtonTarget.getItems()
@@ -167,6 +174,12 @@ class InterpolateWindow(object):
 		self.w.interpolateYSlider.set(0)
 		self.w.scaleXSlider.set(100)
 		self.w.scaleYSlider.set(100)
+	
+	def glyphSetTextEditorCallback(self, sender):
+		self.selectedGlyphSet = sender.get()
+		
+	def glyphSetCheckBoxCallback(self, sender):
+		self.limitGlyphSet = sender.get()
 	
 	def keepStrokeXCheckBoxCallback(self, sender):
 		self.keepStrokeX = sender.get()
@@ -372,7 +385,52 @@ class InterpolateWindow(object):
 			self.interpolateYValue = int(interpolYValue)
 			self.w.interpolateYEditText.set(self.interpolateYValue)
 			self.w.interpolateYSlider.set(self.interpolateYValue)
+			
+	def collaPolate(self, gS, gT, barIncrement):
+		self.w.bar.increment(barIncrement)
+		#Collect Master1 points
+		self.allSourcePoints = []
+		self.allSourcePointsLength = []
+		if self.useSourceLayer:
+			sourceLayer = gS.getLayer(self.sourceLayerName)
+		else:
+			sourceLayer = gS
+	
+		for i in range(len(sourceLayer)):
+			self.allSourcePoints.append([])
+			for j in range(len(sourceLayer[i].points)):
+				
+				self.allSourcePoints[i].append((sourceLayer[i].points[j].x, sourceLayer[i].points[j].y))
+				self.allSourcePointsLength.append(j)
+				
+		#print allSourcePoints
+				
+		#Collect Master2 points
+		self.allTargetPoints = []
+		self.allTargetPointsLength = []
+		if self.useTargetLayer:
+			targetLayer = gT.getLayer(self.targetLayerName)
+		else:
+			targetLayer = gT
 		
+		for i in range(len(targetLayer)):
+			self.allTargetPoints.append([])
+			for j in range(len(targetLayer[i].points)):
+				
+				self.allTargetPoints[i].append((targetLayer[i].points[j].x, targetLayer[i].points[j].y))
+				self.allTargetPointsLength.append(j)
+		
+		#print allTargetPoints
+		if self.allSourcePointsLength != self.allTargetPointsLength:
+			print 'Warning: Glyph ' + gS.name + ' not matching'
+			#print self.allSourcePointsLength
+			#print self.allTargetPointsLength
+		else:
+			gI = self.interpol(gS, gT, self.interpolateXValue, self.interpolateYValue)		
+			self.newFont.newGlyph(gI.name)
+			self.newFont[gI.name] = gI
+			self.newFont[gI.name].update()
+							
 	def buttonOKCallback(self, sender):
 		 #print "Ok"
 		if len(self.newFont) != 0:
@@ -391,50 +449,13 @@ class InterpolateWindow(object):
 		for gT in targetFont:
 			for gS in sourceFont:
 				if gT.name == gS.name:
-					self.w.bar.increment(barIncrement)
-					
-					#Collect Master1 points
-					self.allSourcePoints = []
-					self.allSourcePointsLength = []
-					if self.useSourceLayer:
-						sourceLayer = gS.getLayer(self.sourceLayerName)
-					else:
-						sourceLayer = gS
-				
-					for i in range(len(sourceLayer)):
-						self.allSourcePoints.append([])
-						for j in range(len(sourceLayer[i].points)):
-							
-							self.allSourcePoints[i].append((sourceLayer[i].points[j].x, sourceLayer[i].points[j].y))
-							self.allSourcePointsLength.append(j)
-							
-					#print allSourcePoints
-							
-					#Collect Master2 points
-					self.allTargetPoints = []
-					self.allTargetPointsLength = []
-					if self.useTargetLayer:
-						targetLayer = gT.getLayer(self.targetLayerName)
-					else:
-						targetLayer = gT
-					
-					for i in range(len(targetLayer)):
-						self.allTargetPoints.append([])
-						for j in range(len(targetLayer[i].points)):
-							
-							self.allTargetPoints[i].append((targetLayer[i].points[j].x, targetLayer[i].points[j].y))
-							self.allTargetPointsLength.append(j)
-					
-					#print allTargetPoints
-					if self.allSourcePointsLength != self.allTargetPointsLength:
-						print 'Warning: Glyph ' + gS.name + ' not matching'
-						#print self.allSourcePointsLength
-						#print self.allTargetPointsLength
-					else:
-						gI = self.interpol(gS, gT, self.interpolateXValue, self.interpolateYValue)		
-						self.newFont.newGlyph(gI.name)
-						self.newFont[gI.name] = gI
-						self.newFont[gI.name].update()
+					if self.limitGlyphSet:
+						s = str(self.selectedGlyphSet)
+						l = s.split(' ')
+						if gT.name in l:
+							self.collaPolate(gS, gT, barIncrement)
+					elif not self.limitGlyphSet:
+						self.collaPolate(gS, gT, barIncrement)
 		self.newFont.update()
 		self.w.bar.set(0)
 
