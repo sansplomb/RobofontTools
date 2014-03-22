@@ -1,5 +1,4 @@
 from vanilla import *
-from robofab.pens.digestPen import *
 import string, sys
 
 
