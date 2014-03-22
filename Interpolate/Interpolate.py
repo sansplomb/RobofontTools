@@ -483,9 +483,9 @@ class InterpolateWindow(object):
                 self.allTargetPointsLength.append(j)
         
         if self.allSourcePointsLength != self.allTargetPointsLength:
-            print 'Warning: Glyph ' + gS.name + ' not matching'
-            print self.allSourcePoints
-            print self.allTargetPoints
+            print 'Warning: Glyph ' + gS.name + ' masters not matching'
+            #print self.allSourcePoints
+            #print self.allTargetPoints
         else:
             gI = self.interpol(gS, gT, self.interpolateXValue, self.interpolateYValue)        
             self.newFont.newGlyph(gI.name)
