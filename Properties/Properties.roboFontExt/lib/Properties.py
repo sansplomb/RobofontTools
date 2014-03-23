@@ -25,7 +25,8 @@ class ShowPropertiesTextBox(TextBox):
 	
 	def getOnsSelected(self):
 		contourList = []
-		pointList = []
+		onPointList = []
+		offPointList = []
 		list_x = []
 		list_y = []
 		for contour in CurrentGlyph():
@@ -33,12 +34,14 @@ class ShowPropertiesTextBox(TextBox):
 			for segment in contour:
 				for point in segment:
 					if point.type != 'offCurve':
-						pointList.append(point)
+						onPointList.append(point)
+					elif point.type == 'offCurve':
+						offPointList.append(point)
 					if point.selected:
 						list_x.append(point.x)
 						list_y.append(point.y)
 		
-		return (list_x, list_y, contourList, pointList)
+		return (list_x, list_y, contourList, onPointList, offPointList)
 	
 	def bcpDistance(self):
 		sel = self.getOffSelection()
@@ -58,17 +61,17 @@ class ShowPropertiesTextBox(TextBox):
 		return (dx, dy)
 		
 	def onSelectedDistance(self):
-		(list_x, list_y, contourList, pointList) = self.getOnsSelected()
+		(list_x, list_y, contourList, onPointList, offPointList) = self.getOnsSelected()
 		dist_x = self.getDist(list_x)
 		dist_y = self.getDist(list_y)
-		return (dist_x, dist_y, len(contourList), len(pointList))
+		return (dist_x, dist_y, len(contourList), len(onPointList), len(offPointList))
 	
 	
 	def draw(self, info):
 		(bcpDist_x, bcpDist_y) = self.bcpDistance()
-		(dist_x, dist_y, contours, points) = self.onSelectedDistance()
+		(dist_x, dist_y, contours, onPoints, offPoints) = self.onSelectedDistance()
 				
-		text = u"⥓ %s ⥔ %s | ↔︎ %s ↕︎ %s | ◦ %s ⋅ %s" % (bcpDist_x, bcpDist_y, dist_x, dist_y, contours, points)
+		text = u"⥓ %s ⥔ %s | ↔︎ %s ↕︎ %s | ◦ %s ⋅ %s ⟜ %s" % (bcpDist_x, bcpDist_y, dist_x, dist_y, contours, onPoints, offPoints)
 		self.set(text)
 		
 		def windowCloseCallback(self, sender):
