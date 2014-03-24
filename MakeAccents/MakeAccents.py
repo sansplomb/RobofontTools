@@ -1,6 +1,6 @@
 from vanilla import *
-import math 
 from defconAppKit.windows.baseWindow import BaseWindowController
+import math 
 
 toBeDecomposed = [
 				'AE', 'OE', 'Lslash', 'Oslash', 'Eth', 'Thorn',
@@ -348,8 +348,7 @@ class Process(BaseWindowController):
 
 	def __init__(self):
 		self.w = FloatingWindow((200, 55))
-		#self.w.bar = ProgressBar((10, 10, -10, 16), sizeStyle = "small")
-		self.w.textBox = TextBox((10, 10, -10, 16), "Diacritics", sizeStyle = "regular", alignment = "center")
+		self.w.textBox = TextBox((10, 10, -10, 16), "Diacritics & Ligatures", sizeStyle = "regular", alignment = "center")
 		self.w.buttonMake = Button((10, -20, 90, 15), "Make", sizeStyle = "small", callback=self.showProgress)
 		self.w.buttonDelete = Button((110, -20, -10, 15), "Delete", sizeStyle = "small", callback=self.showDelete)
 		self.w.center()
@@ -422,12 +421,6 @@ class Process(BaseWindowController):
 			basesNames = glyphsToMake[i][0] 
 			accentsNames = glyphsToMake[i][1] 
 			f.newGlyph(i)
-			markColor = (0, 1, 1, 0.5)
-			if i in toBeDecomposed:
-				markColor = (0, 1, 0, 0.5)
-			elif i in metricsAdjust:
-				markColor = (0, 0, 1, 0.5)
-			f[i].mark = markColor
 			f[i].width = 0
 			yShift = 0
 			xShift = 0
@@ -444,6 +437,14 @@ class Process(BaseWindowController):
 				if accent == 'ogonek' or accent == 'cedilla' or accent == 'slash' or accent == 'commaaccent' or accent == 'caron.alt' or accent == 'periodcentered':
 					yShift = 0
 				f[i].appendComponent(accent, ((f[i].width/2 - f[accent].width/2)+xShift, yShift))
+			markColor = (0, 1, 1, 0.5)
+			if i in toBeDecomposed:
+				markColor = (0, 1, 0, 0.5)
+				for j in f[i].components:
+				    j.decompose()
+			elif i in metricsAdjust:
+				markColor = (0, 0, 1, 0.5)
+			f[i].mark = markColor
 			f[i].update()
 			
 def getItalAngle(f):
