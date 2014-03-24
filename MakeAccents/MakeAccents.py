@@ -1,9 +1,11 @@
 from vanilla import *
 import math 
+from defconAppKit.windows.baseWindow import BaseWindowController
 
 toBeDecomposed = [
 				'AE', 'OE', 'Lslash', 'Oslash', 'Eth', 'Thorn',
 				'ae', 'oe', 'lslash', 'oslash', 'eth', 'thorn', 'germandbls',
+				'ae.sc', 'oe.sc', 'lslash.sc', 'oslash.sc', 'eth.sc', 'thorn.sc',
 				'fi', 'fl', 'f_f', 'f_f_i', 'f_f_l', 'f_t', 'f_b', 'f_f_b', 'f_h', 'f_f_h', 'f_k', 'f_f_k', 'f_j', 'f_f_j', 'f_f_t', 'c_t', 's_p', 's_t',
 				'Aogonek', 'Ccedilla', 'Eogonek', 'Hbar', 'Iogonek', 'Scedilla', 'Tbar', 'Uogonek',
 				'aogonek', 'ccedilla', 'dcroat', 'eogonek', 'hbar', 'iogonek', 'scedilla', 'tbar', 'uogonek',
@@ -342,6 +344,108 @@ extrasL = {
 		'zdotaccent.sc': [['z.sc'], ['dotaccent']]
 			}
 			
+class Process(BaseWindowController):
+
+	def __init__(self):
+		self.w = FloatingWindow((200, 55))
+		#self.w.bar = ProgressBar((10, 10, -10, 16), sizeStyle = "small")
+		self.w.textBox = TextBox((10, 10, -10, 16), "Diacritics", sizeStyle = "regular", alignment = "center")
+		self.w.buttonMake = Button((10, -20, 90, 15), "Make", sizeStyle = "small", callback=self.showProgress)
+		self.w.buttonDelete = Button((110, -20, -10, 15), "Delete", sizeStyle = "small", callback=self.showDelete)
+		self.w.center()
+		self.w.open()
+		
+	
+	def showProgress(self, sender):
+		self.progress = self.startProgress("Checking UFO...", tickCount=100)
+		glyphsToMake = self.defineGlyphsToMake(f, extrasL)
+		self.progress.close()
+		self.progress = self.startProgress("Processing...", tickCount=100)
+		self.makeGlyphs(f, glyphsToMake)
+		self.progress.close()
+		self.w.close()
+	
+	def showDelete(self, sender):
+		self.progress = self.startProgress("Deleting Diactitics...", tickCount=100)
+		self.deleteAll(f)
+		self.progress.close()
+		
+	def deleteAll(self, f):
+		self.progress.setTickCount(len(extrasL.keys()))
+		for i in extrasL.keys():
+			self.progress.update()
+			if i in f.keys():
+				f.removeGlyph(i)
+
+	def defineGlyphsToMake(self, f, extrasDict):
+		glyphsToMake = {}
+		self.progress.setTickCount(len(extrasDict.keys()))
+		for i in extrasDict.keys():
+			self.progress.update()
+			newGlyphName = i
+			basesNames = extrasDict[i][0]
+			accentsNames = extrasDict[i][1]
+			missing = False
+			#print newGlyphName, basesNames, accentsNames
+			if i in f.keys():
+				continue
+				#print 'glyph ' + i + ' already exists'
+			else:
+				#check if components are present in the font
+				for base in basesNames:
+					if len(accentsNames) > 0:
+						for accent in accentsNames:
+							if base in f.keys() and accent in f.keys():
+								continue
+							elif base not in f.keys():
+								#print 'glyph ' + base + ' is missing'
+								#missingBases.append(base)
+								missing = True
+							elif accent not in f.keys():
+								#print 'glyph ' + accent + ' is missing'
+								#missingAccents.append(accent)
+								missing = True
+					else:
+						if base not in f.keys():
+							#print 'glyph ' + base + ' is missing'
+							missing = True
+				if missing == False:
+					#print 'glyph ' + i + ' to create'
+					glyphsToMake[i] = (basesNames , accentsNames)
+
+		return glyphsToMake
+
+	def makeGlyphs(self, f, glyphsToMake):	
+		self.progress.setTickCount(len(glyphsToMake.keys()))
+		for i in glyphsToMake.keys():
+			self.progress.update()
+			basesNames = glyphsToMake[i][0] 
+			accentsNames = glyphsToMake[i][1] 
+			f.newGlyph(i)
+			markColor = (0, 1, 1, 0.5)
+			if i in toBeDecomposed:
+				markColor = (0, 1, 0, 0.5)
+			elif i in metricsAdjust:
+				markColor = (0, 0, 1, 0.5)
+			f[i].mark = markColor
+			f[i].width = 0
+			yShift = 0
+			xShift = 0
+			for base in basesNames:
+				if base.isupper():
+					yShift = yShiftCaps
+					xShift = xShiftCaps
+				if base[-2:] == 'sc':
+					yShift = yShiftSmallCaps
+					xShift = xShiftSmallCaps
+				f[i].appendComponent(base, (f[i].width, 0))
+				f[i].width += f[base].width
+			for accent in accentsNames:
+				if accent == 'ogonek' or accent == 'cedilla' or accent == 'slash' or accent == 'commaaccent' or accent == 'caron.alt' or accent == 'periodcentered':
+					yShift = 0
+				f[i].appendComponent(accent, ((f[i].width/2 - f[accent].width/2)+xShift, yShift))
+			f[i].update()
+			
 def getItalAngle(f):
 	italAngle = f.info.italicAngle
 	if italAngle == None:
@@ -356,71 +460,6 @@ def getxShift(yShift, italRatio):
 	xShift = int(yShift * italRatio)
 	return xShift
 
-def defineGlyphsToMake(f, extrasDict):
-	glyphsToMake = {}
-	# check if all required components are in the font
-	for i in extrasDict.keys():
-		newGlyphName = i
-		basesNames = extrasDict[i][0]
-		accentsNames = extrasDict[i][1]
-		missing = False
-		#print newGlyphName, basesNames, accentsNames
-		if i in f.keys():
-			continue
-			#print 'glyph ' + i + ' already exists'
-		else:
-			#check if components are present in the font
-			for base in basesNames:
-				if len(accentsNames) > 0:
-					for accent in accentsNames:
-						if base in f.keys() and accent in f.keys():
-							continue
-						elif base not in f.keys():
-							#print 'glyph ' + base + ' is missing'
-							#missingBases.append(base)
-							missing = True
-						elif accent not in f.keys():
-							#print 'glyph ' + accent + ' is missing'
-							#missingAccents.append(accent)
-							missing = True
-				else:
-					if base not in f.keys():
-						#print 'glyph ' + base + ' is missing'
-						missing = True
-			if missing == False:
-				#print 'glyph ' + i + ' to create'
-				glyphsToMake[i] = (basesNames , accentsNames)
-
-	return glyphsToMake
-
-def makeGlyphs(f, glyphsToMake):
-	for i in glyphsToMake.keys():
-		basesNames = glyphsToMake[i][0] 
-		accentsNames = glyphsToMake[i][1] 
-		f.newGlyph(i)
-		markColor = (0, 1, 1, 0.5)
-		if i in toBeDecomposed:
-			markColor = (0, 1, 0, 0.5)
-		elif i in metricsAdjust:
-			markColor = (0, 0, 1, 0.5)
-		f[i].mark = markColor
-		f[i].width = 0
-		yShift = 0
-		xShift = 0
-		for base in basesNames:
-			if base.isupper():
-				yShift = yShiftCaps
-				xShift = xShiftCaps
-			if base[-2:] == 'sc':
-				yShift = yShiftSmallCaps
-				xShift = xShiftSmallCaps
-			f[i].appendComponent(base, (f[i].width, 0))
-			f[i].width += f[base].width
-		for accent in accentsNames:
-			if accent == 'ogonek' or accent == 'cedilla' or accent == 'slash' or accent == 'commaaccent' or accent == 'caron.alt' or accent == 'periodcentered':
-				yShift = 0
-			f[i].appendComponent(accent, ((f[i].width/2 - f[accent].width/2)+xShift, yShift))
-		f[i].update()
 
 f = CurrentFont()
 glyphsToMake = {}
@@ -440,10 +479,5 @@ italRatio = getItalRatio(italAngle)
 xShiftCaps = getxShift(yShiftCaps, italRatio)
 xShiftSmallCaps = getxShift(yShiftSmallCaps, italRatio)
 
-glyphsToMake = defineGlyphsToMake(f, extrasL)
-makeGlyphs(f, glyphsToMake)
+Process()
 f.update()
-
-#for i in extrasL.keys():
-#	if i in f.keys():
-#		f.removeGlyph(i)
