@@ -10,3 +10,5 @@ Tools for working in RoboFont
 <b>- AssignFontLayer:</b> Robofont script window to copy all glyphs from a font to another font's new custom layer.
 
 <b>- Interpolate:</b> Robofont script window to interpolate between two masters into a new font.
+
+<b>- CopyToMask:</b> RoboFont script that copies foreground current glyph to Mask layer
