@@ -82,8 +82,6 @@ class Process(BaseWindowController):
 	def __init__(self):
 		self.w = FloatingWindow((310, 150))
 		
-		#self.encS = False
-		#self.encML = False
 		self.w.textBox = TextBox((10, 10, -10, 16), "Fractions & Ordinals", sizeStyle = "regular", alignment = "center")
 		self.w.textBoxEncodingS = CheckBox((10, 40, -10, 20), "Encoding S", sizeStyle = "small", 
 											callback=self.textBoxEncodingSCallback, value = False)
@@ -101,15 +99,11 @@ class Process(BaseWindowController):
 		self.w.close()
 		
 	def textBoxEncodingSCallback(self, sender):
-		#self.encS = sender.get()
 		if sender.get():
-			#self.encML = False
 			self.w.textBoxEncodingML.set(False)
 		
 	def textBoxEncodingMLCallback(self, sender):
-		#self.encML = sender.get()
 		if sender.get():
-			#self.encS = False
 			self.w.textBoxEncodingS.set(False)
 	
 	def showProgress(self, sender):
