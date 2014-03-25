@@ -41,7 +41,7 @@ denominators = {
 	'nine.denominator': ['ninesuperior']
 	}
 
-fractions = {
+fractionsML = {
 	'onehalf': ['onesuperior', 'fraction', 'twosuperior'],
 	'onequarter': ['onesuperior', 'fraction', 'foursuperior'],
 	'threequarters': ['threesuperior', 'fraction', 'foursuperior'],
@@ -71,45 +71,84 @@ fractions = {
 	'eightninths': ['eightsuperior', 'fraction', 'ninesuperior']
 	}
 
+fractionsS = {
+	'onehalf': ['onesuperior', 'fraction', 'twosuperior'],
+	'onequarter': ['onesuperior', 'fraction', 'foursuperior'],
+	'threequarters': ['threesuperior', 'fraction', 'foursuperior'],
+	}
+	
 class Process(BaseWindowController):
 
 	def __init__(self):
-		self.w = FloatingWindow((200, 55))
+		self.w = FloatingWindow((310, 150))
+		
+		#self.encS = False
+		#self.encML = False
 		self.w.textBox = TextBox((10, 10, -10, 16), "Fractions & Ordinals", sizeStyle = "regular", alignment = "center")
+		self.w.textBoxEncodingS = CheckBox((10, 40, -10, 20), "Encoding S", sizeStyle = "small", 
+											callback=self.textBoxEncodingSCallback, value = False)
+		self.w.textBoxEncodingML = CheckBox((10, 70, -10, 20), "Encoding M & L", sizeStyle = "small", 
+											callback=self.textBoxEncodingMLCallback, value = False)
+
 		self.w.buttonMake = Button((10, -20, 90, 15), "Make", sizeStyle = "small", callback=self.showProgress)
-		self.w.buttonDelete = Button((110, -20, -10, 15), "Delete", sizeStyle = "small", callback=self.showDelete)
+		self.w.buttonDelete = Button((110, -20, 90, 15), "Delete All", sizeStyle = "small", callback=self.showDelete)
+		self.w.buttonClose = Button((210, -20, 90, 15), "Close", sizeStyle = "small", callback=self.closeWindow)
+		
 		self.w.center()
 		self.w.open()
 		
+	def closeWindow(self, sender):
+		self.w.close()
+		
+	def textBoxEncodingSCallback(self, sender):
+		#self.encS = sender.get()
+		if sender.get():
+			#self.encML = False
+			self.w.textBoxEncodingML.set(False)
+		
+	def textBoxEncodingMLCallback(self, sender):
+		#self.encML = sender.get()
+		if sender.get():
+			#self.encS = False
+			self.w.textBoxEncodingS.set(False)
 	
 	def showProgress(self, sender):
-		self.progress = self.startProgress("Checking UFO...", tickCount=100)
-		fractionsToMake = self.defineGlyphsToMake(f, fractions)
-		self.progress.close()
-		self.progress = self.startProgress("Making Fractions...", tickCount=100)
-		self.makeFractions(fractionsToMake)
-		self.progress.close()
+		if self.w.textBoxEncodingML.get():
+			self.progress = self.startProgress("Checking UFO...", tickCount=100)
+			fractionsToMake = self.defineGlyphsToMake(f, fractionsML)
+			self.progress.close()
+			self.progress = self.startProgress("Making Fractions M & L...", tickCount=100)
+			self.makeFractions(fractionsToMake)
+			self.progress.close()
 		
-		self.progress = self.startProgress("Checking UFO...", tickCount=100)
-		inferiorsToMake = self.defineGlyphsToMake(f, inferiors)
-		self.progress.close()
-		self.progress = self.startProgress("Making Inferiors...", tickCount=100)
-		self.makeInferiors(inferiorsToMake)
-		self.progress.close()
+			self.progress = self.startProgress("Checking UFO...", tickCount=100)
+			inferiorsToMake = self.defineGlyphsToMake(f, inferiors)
+			self.progress.close()
+			self.progress = self.startProgress("Making Inferiors...", tickCount=100)
+			self.makeInferiors(inferiorsToMake)
+			self.progress.close()
 		
-		self.progress = self.startProgress("Checking UFO...", tickCount=100)
-		numeratorsToMake = self.defineGlyphsToMake(f, numerators)
-		self.progress.close()
-		self.progress = self.startProgress("Making Numerators...", tickCount=100)
-		self.makeNumerators(numeratorsToMake)
-		self.progress.close()
+			self.progress = self.startProgress("Checking UFO...", tickCount=100)
+			numeratorsToMake = self.defineGlyphsToMake(f, numerators)
+			self.progress.close()
+			self.progress = self.startProgress("Making Numerators...", tickCount=100)
+			self.makeNumerators(numeratorsToMake)
+			self.progress.close()
 
-		self.progress = self.startProgress("Checking UFO...", tickCount=100)
-		denominatorsToMake = self.defineGlyphsToMake(f, denominators)
-		self.progress.close()
-		self.progress = self.startProgress("Making Denominators...", tickCount=100)
-		self.makeDenominators(denominatorsToMake)
-		self.progress.close()
+			self.progress = self.startProgress("Checking UFO...", tickCount=100)
+			denominatorsToMake = self.defineGlyphsToMake(f, denominators)
+			self.progress.close()
+			self.progress = self.startProgress("Making Denominators...", tickCount=100)
+			self.makeDenominators(denominatorsToMake)
+			self.progress.close()
+			
+		elif self.w.textBoxEncodingS.get:
+			self.progress = self.startProgress("Checking UFO...", tickCount=100)
+			fractionsToMake = self.defineGlyphsToMake(f, fractionsS)
+			self.progress.close()
+			self.progress = self.startProgress("Making Fractions S...", tickCount=100)
+			self.makeFractions(fractionsToMake)
+			self.progress.close()
 		
 		self.w.close()
 	
@@ -119,8 +158,8 @@ class Process(BaseWindowController):
 		self.progress.close()
 		
 	def deleteAll(self, f):
-		self.progress.setTickCount(len(fractions.keys()) + len(inferiors.keys()) + len(numerators.keys()) + len(denominators.keys()))
-		for i in fractions.keys():
+		self.progress.setTickCount(len(fractionsML.keys()) + len(inferiors.keys()) + len(numerators.keys()) + len(denominators.keys()))
+		for i in fractionsML.keys():
 			self.progress.update()
 			if i in f.keys():
 				f.removeGlyph(i)
@@ -167,9 +206,9 @@ class Process(BaseWindowController):
 			self.progress.update()
 			f.newGlyph(i)
 			f[i].mark = (1, 0, 1, 0.5)
-			firstSup = fractions[i][0] 
-			fraction = fractions[i][1]
-			secondInf = fractions[i][2] 
+			firstSup = fractionsDict[i][0] 
+			fraction = fractionsDict[i][1]
+			secondInf = fractionsDict[i][2] 
 			f[i].width = f[firstSup].width + f[fraction].width + f[secondInf].width
 			f[i].appendComponent(firstSup, (0, 0))
 			f[i].appendComponent(fraction, (f[firstSup].width, 0))
