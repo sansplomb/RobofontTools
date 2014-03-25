@@ -13,6 +13,8 @@ Tools for working in RoboFont
 
 <b>- CopyToMask:</b> Script that copies foreground current glyph to Mask layer.
 
-<b>- MakeAccents:</b> Script preparing diacritics and ligature.
+<b>- MakeAccents:</b> Script preparing diacritics and ligature, FY encodings.
 
-<b>- MakeFractions:</b> Script making fractions, inferiors, numerators and denominators out of superior figures.
+<b>- MakeFractions:</b> Script making fractions, inferiors, numerators and denominators out of superior figures, FY encodings.
+
+<b>- CreateEncoding:</b>	Script setting font GlyphOrder for FY encoding S M L.
