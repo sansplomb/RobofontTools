@@ -18,3 +18,5 @@ Tools for working in RoboFont
 <b>- MakeFractions:</b> Script making fractions, inferiors, numerators and denominators out of superior figures, FY encodings.
 
 <b>- CreateEncoding:</b>	Script setting font GlyphOrder for FY encoding S M L.
+
+<b>- CheckGlyphIntegrity:</b> Script checking for glyphs with: mixed contours and components, overlapping components, overlapping contours. Highlight them and prints a report.
