@@ -48,7 +48,7 @@ class Process(BaseWindowController):
 			self.progress.close()
 			
 		if self.w.checkBoxOverlap.get():
-			self.progress = self.startProgress("Checking Overlaps...")
+			self.progress = self.startProgress("Checking Overlapping contours...")
 			self.checkOverlap(f)
 			self.progress.close()
 		self.w.close()
@@ -93,7 +93,7 @@ class Process(BaseWindowController):
 				for cD_index in range(len(gDecomposed)):
 					for i in range(len(gDecomposed[cD_index])):
 						pD_list.append(i)
-				if len(pDM_list) != len(pD_list):
+				if len(pDM_list) != len(pD_list) or len(gDecomposedMerged) != len(gDecomposed):
 					print g.name, 'has overlapping components'
 					g.mark = (0.5, 0, 0, 0.4)
 		f.removeLayer("_backupDecMerg")
