@@ -20,3 +20,6 @@ Tools for working in RoboFont
 <b>- CreateEncoding:</b>	Script setting font GlyphOrder for FY encoding S M L.
 
 <b>- CheckGlyphIntegrity:</b> Script checking for glyphs with: mixed contours and components, overlapping components, overlapping contours. Highlight them and prints a report.
+
+<b>- AutoStemSnap:</b> Script setting PostScriptStemSnapH and PostScriptStemSnapV according to automatic
+measurements of ‘O’ and ‘o’.
