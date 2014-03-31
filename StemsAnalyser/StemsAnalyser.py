@@ -6,8 +6,8 @@ from AppKit import *
 import math
 
 def direction(point1, point2):
-	direction_x = ''
-	direction_y = ''
+	direction_x = 4
+	direction_y = 4
 	if point1.x < point2.x:
 		# Direction is RIGHT
 		direction_x = 1
@@ -41,7 +41,7 @@ def rotated(point, angle):
 	return (rotatedPoint_x, rotatedPoint_y)
 	
 	
-def vector(point1, point2):
+def angle(point1, point2):
 	return math.atan2(point2.y - point1.y, point2.x - point1.x) / math.pi * 180
 
 def distance(point1, point2):
@@ -50,11 +50,17 @@ def distance(point1, point2):
 def hypothenuse(point1, point2):
 	return math.sqrt(distance(point1, point2)[0]*distance(point1, point2)[0] + distance(point1, point2)[1]*distance(point1, point2)[1])
 
-def approxEqual(vector1, vector2):
-	if abs(vector1) - abs(vector2) < 5:
-		return True
-	else:
-		return False
+def closeAngle(angle1, angle2):
+	diff = angle1 - angle2
+	while diff >= 90:
+		diff -= 180
+	while diff < -90:
+		diff += 180
+	return (abs(diff)<5)
+
+def approxEqual(a1, a2):
+	return (abs(a1 - a2) < 5)
+
 
 def opposite(direction1, direction2):
 	isOpposite = False
@@ -81,7 +87,18 @@ def isHorizontal(vector):
 		return True
 	else:
 		return False
-	
+
+#Ça répond True si il existe un element de la liste l pour lequel la fonction p renvoi True (on dit que le predicat p est vrai sur cet element)
+def exists(l, p):
+	for e in l:
+		if p(e):
+			return True
+	return False
+
+def xApproxEqualRot(point, angle, referenceX):
+	(x, y) = rotated(point, angle)
+	return approxEqual(x, referenceX)
+
 ##################
 
 def make_hPointsList(g):
@@ -108,8 +125,8 @@ def make_hPointsList(g):
 			if currentPoint.type != 'offCurve':
 				directionIN = direction(prevPoint, currentPoint)
 				directionOUT = direction(currentPoint, nextPoint)
-				vectorIN = vector(prevPoint, currentPoint)
-				vectorOUT = vector(currentPoint, nextPoint)
+				vectorIN = angle(prevPoint, currentPoint)
+				vectorOUT = angle(currentPoint, nextPoint)
 				
 				hPoint = (currentPoint, contour_index, point_index, directionIN, directionOUT, vectorIN, vectorOUT)
 				hPointsList.append(hPoint)
@@ -120,7 +137,7 @@ def getColor(point1, point2, g):
 	hasSomeWhite = False
 	color = ''
 	if abs(point2.x - point1.x) < maxStemX or abs(point2.y - point1.y) < maxStemY:
-		hypothLength = int(math.sqrt((point2.x - point1.x)*(point2.x - point1.x) + (point2.y - point1.y)*(point2.y - point1.y)))
+		hypothLength = int(hypothenuse(point1, point2))
 		for j in range(1, hypothLength-1):
 			cp_x = point1.x + ((j)/hypothLength)*(point2.x - point1.x)
 			cp_y = point1.y + ((j)/hypothLength)*(point2.y - point1.y) 
@@ -139,7 +156,9 @@ def getColor(point1, point2, g):
 		color = 'White'
 	return color
 
-def makeStemsList(g_hPoints, g):
+def makeStemsList(g_hPoints, g, italicAngle):
+	stemsListX_temp = []
+	stemsListY_temp = []
 	stemsListX = []
 	stemsListY = []
 	for source_hPoint in range(len(g_hPoints)):
@@ -150,47 +169,91 @@ def makeStemsList(g_hPoints, g):
 			directionOut_source = g_hPoints[source_hPoint][4]
 			directionIn_target = g_hPoints[target_hPoint][3]
 			directionOut_target = g_hPoints[target_hPoint][4]
-			vectorIn_source =  g_hPoints[source_hPoint][5]
-			vectorOut_source = g_hPoints[source_hPoint][6]
-			vectorIn_target =  g_hPoints[target_hPoint][5]
-			vectorOut_target = g_hPoints[target_hPoint][6]
-			if approxEqual(vectorIn_source, vectorIn_target) or approxEqual(vectorOut_source, vectorOut_target):
-				if opposite(directionIn_source, directionIn_target) or opposite(directionIn_source, directionOut_target):
-					c_distance = distance(sourcePoint, targetPoint)
-					color = getColor(sourcePoint, targetPoint, g)
-					if color == 'Black':
-						stem = (sourcePoint, targetPoint, c_distance)
-						if (isHorizontal(vectorIn_source) or isHorizontal(vectorOut_source)) and (isHorizontal(vectorIn_target) or isHorizontal(vectorOut_target)):
-							if (minStemY < c_distance[1] < maxStemY) :
-								stemsListY.append(stem)
-						if (isVertical(vectorIn_source) or isVertical(vectorOut_source)) and (isVertical(vectorIn_target) or isVertical(vectorOut_target)):
-							if (minStemX < c_distance[0] < maxStemX):
-								stemsListX.append(stem)
-						## ADD A TEST FOR orientationTargetIn and Out, BOTH SOurce and Target must be 'vertical' or 'horizontal'
+			angleIn_source =  g_hPoints[source_hPoint][5]
+			angleOut_source = g_hPoints[source_hPoint][6]
+			angleIn_target =  g_hPoints[target_hPoint][5]
+			angleOut_target = g_hPoints[target_hPoint][6]
+			color = getColor(sourcePoint, targetPoint, g)
+			if color == 'Black':
+				c_distance = distance(sourcePoint, targetPoint)
+				stem = (sourcePoint, targetPoint, c_distance)
+				## if Source and Target are almost aligned
+				if closeAngle(angleIn_source, angleIn_target) or closeAngle(angleOut_source, angleOut_target):
+					## if Source and Target have opposite direction
+					if opposite(directionIn_source, directionIn_target) or opposite(directionIn_source, directionOut_target):	
+						## if they are horizontal, treat the stem on the Y axis
+						if (isHorizontal(angleIn_source) or isHorizontal(angleOut_source)) and (isHorizontal(angleIn_target) or isHorizontal(angleOut_target)):
+							if (minStemY < c_distance[1] < maxStemY):
+								stemsListY_temp.append(stem)
+								#stemsListY.append(stem)
+						if (isVertical(angleIn_source) or isVertical(angleOut_source)) and (isVertical(angleIn_target) or isVertical(angleOut_target)):
+							if (minStemX <= c_distance[0] <= maxStemX):
+								stemsListX_temp.append(stem)
+							#stemsListX.append(stem)
+	# avoid duplicates, filters temporary stems
+	yList = []
+	for stem in stemsListY_temp:
+		if stem[0].y not in yList or stem[1].y not in yList:
+			stemsListY.append(stem)
+			yList.append(stem[0].y)
+			yList.append(stem[1].y)
+
+# ici precalcul l'angle et 
+	xList = []
+	for stem in stemsListX_temp:
+		(preRot0x, preRot0y) = rotated(stem[0], italicAngle)
+		(preRot1x, preRot1y) = rotated(stem[1], italicAngle)
+		def pred0(x):
+			return approxEqual(preRot0x, x)
+		def pred1(x):
+			return approxEqual(preRot1x, x)
+		if not exists(xList,pred0) or not exists(xList,pred1):
+			stemsListX.append(stem)
+			xList.append(preRot0x)
+			xList.append(preRot1x)
+	
 	return (stemsListX, stemsListY)
 	
 ################
 minStemX = 20
 minStemY = 20
-maxStemX = 300
-maxStemY = 300
+maxStemX = 400
+maxStemY = 400
 
 f = CurrentFont()
-
+if f.info.italicAngle != None:
+	ital = - f.info.italicAngle
+else:
+	ital = 0
+	
 g = f['o']
-o_hPoints = make_hPointsList(g )
-(o_stemsListX, o_stemsListY) = makeStemsList(o_hPoints, g)
+if not g:
+	print "WARNING: glyph 'o' missing"
+o_hPoints = make_hPointsList(g)
+(o_stemsListX, o_stemsListY) = makeStemsList(o_hPoints, g, ital)
 
 g = f['O']
-O_hPoints = make_hPointsList(g )
-(O_stemsListX, O_stemsListY) = makeStemsList(O_hPoints, g)
+if not g:
+	print "WARNING: glyph 'O' missing"
+O_hPoints = make_hPointsList(g)
+(O_stemsListX, O_stemsListY) = makeStemsList(O_hPoints, g, ital)
+
+Xs = []
+for i in O_stemsListX:
+	Xs.append(i[2][0])
+maxX = max(Xs)
+
+Ys = []
+for i in o_stemsListY:
+	Ys.append(i[2][1])
+minY = min(Ys)
 
 
+minStemX = minY - 20*(minY/100)
+minStemY = minY - 20*(minY/100)
 
-minStemX = o_stemsListY[0][2][1] -20*(o_stemsListY[0][2][1]/100)
-minStemY = o_stemsListY[0][2][1] -20*(o_stemsListY[0][2][1]/100)
-maxStemX = O_stemsListX[0][2][0] +20*(O_stemsListX[0][2][1]/100)
-maxStemY = O_stemsListX[0][2][0] +20*(O_stemsListX[0][2][1]/100)
+maxStemX = maxX + 20*(maxX/100)
+maxStemY = maxX + 20*(maxX/100)
 
 print 'minX', minStemX, 'maxX', maxStemX
 print 'minY', minStemY, 'maxY', maxStemY		
@@ -279,10 +342,14 @@ class WindowController(object):
 				view._drawTextAtPoint(t % lengthValue, self.attributes, (x, y), drawBackground=True, backgroundColor=self.backgroundColorY, backgroundStrokeColor=self.backgroundStrokeColor)
 	
 	def startButtonCallBack(self, sender):
-		
+		self.f = CurrentFont()
+		if self.f.info.italicAngle != None:
+			self.ital = - self.f.info.italicAngle
+		else:
+			self.ital = 0
 		self.g = CurrentGlyph()
 		self.g_hPoints = make_hPointsList(self.g)
-		(self.stemsListX, self.stemsListY) = makeStemsList(self.g_hPoints, self.g)
+		(self.stemsListX, self.stemsListY) = makeStemsList(self.g_hPoints, self.g, self.ital)
 		addObserver(self, "draw", "draw")
 		addObserver(self, "draw", "drawBackground")	
 	
