@@ -61,8 +61,14 @@ class InterpolateWindow(object):
         
         self.sourceLayerList = af[self.fontSourceIndex].layerOrder
         self.targetLayerList = af[self.fontTargetIndex].layerOrder
-        self.sourceLayerName = self.sourceLayerList[0]
-        self.targetLayerName = self.targetLayerList[0]
+        if len(self.sourceLayerList) > 0:
+            self.sourceLayerName = self.sourceLayerList[0]
+        else:
+            self.sourceLayerName = "foreground"
+        if len(self.targetLayerList) > 0:
+            self.targetLayerName = self.targetLayerList[0]
+        else:
+            self.targetLayerName = "foreground"
         self.useSourceLayer = False
         self.useTargetLayer = False
         self.keepStrokeX = True
@@ -312,7 +318,10 @@ class InterpolateWindow(object):
         self.fontSourceName = self.fontSourceList[sender.get()]
         self.w.popUpButtonSourceLayer.setItems(af[self.fontSourceIndex].layerOrder)
         self.sourceLayerList = af[self.fontSourceIndex].layerOrder
-        self.sourceLayerName = self.sourceLayerList[0]
+        if len(self.sourceLayerList) > 0:
+            self.sourceLayerName = self.sourceLayerList[0]
+        else:
+            self.sourceLayerName = "foreground"
         if len(af[self.fontSourceIndex].info.postscriptStemSnapH) != 0:
             self.sourceRefX = af[self.fontSourceIndex].info.postscriptStemSnapH[0]
         else:
@@ -330,7 +339,10 @@ class InterpolateWindow(object):
         self.fontTargetName = self.fontTargetList[sender.get()]
         self.w.popUpButtonTargetLayer.setItems(af[self.fontTargetIndex].layerOrder)
         self.targetLayerList = af[self.fontTargetIndex].layerOrder
-        self.targetLayerName = self.targetLayerList[0]
+        if len(self.targetLayerList) > 0:
+            self.targetLayerName = self.targetLayerList[0]
+        else:
+            self.targetLayerName = "foreground"
         if len(af[self.fontTargetIndex].info.postscriptStemSnapH) != 0:
             self.targetRefX = af[self.fontTargetIndex].info.postscriptStemSnapH[0]
         else:
