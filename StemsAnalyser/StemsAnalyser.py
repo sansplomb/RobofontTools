@@ -43,6 +43,11 @@ def rotated(point, angle):
 	
 def angle(point1, point2):
 	return math.atan2(point2.y - point1.y, point2.x - point1.x) / math.pi * 180
+	
+def shearFactor(angle):
+	# find the shearFactor r with a given angle
+	r = math.tan(math.radians(angle))
+	return r
 
 def distance(point1, point2):
 	return (abs(point1.x - point2.x), abs(point1.y - point2.y))
@@ -59,8 +64,7 @@ def closeAngle(angle1, angle2):
 	return (abs(diff)<5)
 
 def approxEqual(a1, a2):
-	return (abs(a1 - a2) < 5)
-
+	return (abs(a1 - a2) < 10)
 
 def opposite(direction1, direction2):
 	isOpposite = False
@@ -95,10 +99,10 @@ def exists(l, p):
 			return True
 	return False
 
-def xApproxEqualRot(point, angle, referenceX):
-	(x, y) = rotated(point, angle)
-	return approxEqual(x, referenceX)
-
+def sheared(point, angle):
+	r = shearFactor(angle)
+	return (point.x + r*point.y, point.y)
+	
 ##################
 
 def make_hPointsList(g):
@@ -160,7 +164,7 @@ def makeStemsList(g_hPoints, g, italicAngle):
 	stemsListX_temp = []
 	stemsListY_temp = []
 	stemsListX = []
-	stemsListY = []
+	stemsListY = []	
 	for source_hPoint in range(len(g_hPoints)):
 		for target_hPoint in range(len(g_hPoints)):
 			sourcePoint = g_hPoints[source_hPoint][0]
@@ -177,19 +181,22 @@ def makeStemsList(g_hPoints, g, italicAngle):
 			if color == 'Black':
 				c_distance = distance(sourcePoint, targetPoint)
 				stem = (sourcePoint, targetPoint, c_distance)
+				hypoth = hypothenuse(sourcePoint, targetPoint)
 				## if Source and Target are almost aligned
-				if closeAngle(angleIn_source, angleIn_target) or closeAngle(angleOut_source, angleOut_target):
+				if closeAngle(angleIn_source, angleIn_target) or closeAngle(angleOut_source, angleOut_target) or closeAngle(angleIn_source, angleOut_target) or closeAngle(angleOut_source, angleIn_target):
 					## if Source and Target have opposite direction
-					if opposite(directionIn_source, directionIn_target) or opposite(directionIn_source, directionOut_target):	
+					if opposite(directionIn_source, directionIn_target) or opposite(directionIn_source, directionOut_target) or opposite(directionOut_source, directionIn_target):
+						
 						## if they are horizontal, treat the stem on the Y axis
 						if (isHorizontal(angleIn_source) or isHorizontal(angleOut_source)) and (isHorizontal(angleIn_target) or isHorizontal(angleOut_target)):
-							if (minStemY < c_distance[1] < maxStemY):
+							if (minStemY < c_distance[1] < maxStemY) and (minStemY <= hypoth <= maxStemY):
 								stemsListY_temp.append(stem)
-								#stemsListY.append(stem)
+								
+						## if they are vertical, treat the stem on the X axis		
 						if (isVertical(angleIn_source) or isVertical(angleOut_source)) and (isVertical(angleIn_target) or isVertical(angleOut_target)):
-							if (minStemX <= c_distance[0] <= maxStemX):
+							
+							if (minStemX <= c_distance[0] <= maxStemX) and (minStemX <= hypoth <= maxStemX):
 								stemsListX_temp.append(stem)
-							#stemsListX.append(stem)
 	# avoid duplicates, filters temporary stems
 	yList = []
 	for stem in stemsListY_temp:
@@ -198,14 +205,15 @@ def makeStemsList(g_hPoints, g, italicAngle):
 			yList.append(stem[0].y)
 			yList.append(stem[1].y)
 
-# ici precalcul l'angle et 
 	xList = []
 	for stem in stemsListX_temp:
 		(preRot0x, preRot0y) = rotated(stem[0], italicAngle)
 		(preRot1x, preRot1y) = rotated(stem[1], italicAngle)
 		def pred0(x):
+			#print preRot0x, x
 			return approxEqual(preRot0x, x)
 		def pred1(x):
+			#print preRot1x, x
 			return approxEqual(preRot1x, x)
 		if not exists(xList,pred0) or not exists(xList,pred1):
 			stemsListX.append(stem)
