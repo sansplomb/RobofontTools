@@ -19,6 +19,15 @@ def createFontList():
 class InterpolateWindow(object):
 	
 	def __init__(self):
+		self.selectedGlyphSet = ''
+		selectedList = []
+		for g in f:
+			if g.selected:
+				selectedList.append(g.name)
+		selectedList.sort()
+		for e in selectedList:
+			self.selectedGlyphSet += e + ' '
+	   
 		self.fontSourceName = fontList[0]
 		self.fontTargetName = fontList[0]
 		self.fontSourceIndex = 0
@@ -37,7 +46,7 @@ class InterpolateWindow(object):
 				for i in c_Font.lib["GlyphSets"]:
 					self.savedGlyphSets[i] = c_Font.lib["GlyphSets"][i]
 			else:
-				print "no saved glyph sets"
+				#print "no saved glyph sets"
 				#self.savedGlyphSets = {}
 				c_Font.lib["GlyphSets"] = {}
 			for glyphSet in self.savedGlyphSets.keys():
@@ -76,7 +85,6 @@ class InterpolateWindow(object):
 		self.keepStrokeX = True
 		self.keepStrokeY = True
 		self.limitGlyphSet = False
-		self.selectedGlyphSet = ''
 		
 		self.w = FloatingWindow((500, 600), "Interpolate")
 		self.w.textBoxSource = TextBox((10, 10, 190, 20), "First Master")
@@ -138,9 +146,9 @@ class InterpolateWindow(object):
 		self.w.scaleXTextBox = TextBox((10, 290, -10, 20), "Scale X (%)")
 		self.w.scaleXEditText = EditText((100, 290, 60, 20),
 							callback=self.scaleXEditTextCallback)
-		self.w.keepStrokeXCheckBox = CheckBox((170, 290, 200, 20), "keep stem:",
+		self.w.keepStrokeXCheckBox = CheckBox((170, 290, 200, 20), "keep stem (%)",
 						   callback=self.keepStrokeXCheckBoxCallback, value=self.keepStrokeX)
-		self.w.keepStrokeXEditText = EditText((260, 290, 60, 20),
+		self.w.keepStrokeXEditText = EditText((280, 290, 40, 20),
 							callback=self.keepStrokeXEditTextCallback)
 		self.w.keepStrokeXSlider = Slider((330, 290, -10, 23),
 							value = 100,
@@ -158,9 +166,9 @@ class InterpolateWindow(object):
 		self.w.scaleYTextBox = TextBox((10, 360, -10, 20), "Scale Y (%)")
 		self.w.scaleYEditText = EditText((100, 360, 60, 20),
 							callback=self.scaleYEditTextCallback)
-		self.w.keepStrokeYCheckBox = CheckBox((170, 360, 200, 20), "keep stem:",
+		self.w.keepStrokeYCheckBox = CheckBox((170, 360, 200, 20), "keep stem (%)",
 						   callback=self.keepStrokeYCheckBoxCallback, value=self.keepStrokeY)
-		self.w.keepStrokeYEditText = EditText((260, 360, 60, 20),
+		self.w.keepStrokeYEditText = EditText((280, 360, 40, 20),
 							callback=self.keepStrokeYEditTextCallback)
 		self.w.keepStrokeYSlider = Slider((330, 360, -10, 23),
 							value = 100,
@@ -176,13 +184,16 @@ class InterpolateWindow(object):
 							minValue = 1,
 							callback=self.scaleYSliderCallback)
 							
-		self.w.glyphSetCheckBox = CheckBox((10, 420, 200, 20), "Apply only on glyph set:",
+		self.w.glyphSetCheckBox = CheckBox((10, 420, 200, 20), "Limit to Glyphs:",
 								callback=self.glyphSetCheckBoxCallback, value=self.limitGlyphSet)
 		self.w.popUpButtonGlyphSet = PopUpButton((210, 420, 180, 20), self.savedGlyphSets.keys(), callback=self.popUpButtonGlyphSetCallback, sizeStyle = "regular")
 		self.w.buttonClearGlyphSet = Button((400, 420, -10, 20), "Clear Set",
 							callback=self.buttonClearGlyphSetCallback)
 		self.w.glyphSetTextEditor = TextEditor((10, 450, -10, 50),
 							callback=self.glyphSetTextEditorCallback)
+							
+		self.w.glyphSetTextEditor.set(self.selectedGlyphSet)
+		
 		self.w.buttonSaveGlyphSet = Button((10, 510, 200, 20), "Save Glyph Set As",
 							callback=self.buttonSaveGlyphSetCallback)
 		self.w.saveGlyphSetEditText = EditText((220, 510, -10, 20),
@@ -568,9 +579,9 @@ class InterpolateWindow(object):
 		self.w.bar.set(0)
 		self.sourceFont = af[self.fontSourceIndex]
 		self.targetFont = af[self.fontTargetIndex]
-		
+		barIncrement = 100/len(self.targetFont)
 		for gT in self.targetFont:
-			barIncrement = 100/len(self.targetFont)
+			self.w.bar.increment(barIncrement)
 			for gS in self.sourceFont:
 				if gT.name == gS.name:
 					if self.limitGlyphSet:
