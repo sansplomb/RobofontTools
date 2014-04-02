@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>addToMenu</key>
+	<array>
+		<dict>
+			<key>path</key>
+			<string>StemsAnalyser.py</string>
+			<key>preferredName</key>
+			<string>Stems Analyser</string>
+			<key>shortKey</key>
+			<string></string>
+		</dict>
+	</array>
+	<key>developer</key>
+	<string>Jeremie Hornus</string>
+	<key>developerURL</key>
+	<string></string>
+	<key>html</key>
+	<false/>
+	<key>launchAtStartUp</key>
+	<integer>0</integer>
+	<key>mainScript</key>
+	<string></string>
+	<key>name</key>
+	<string>StemsAnalyser</string>
+	<key>timeStamp</key>
+	<real>1396437143.106701</real>
+	<key>version</key>
+	<string>1.0</string>
+</dict>
+</plist>
