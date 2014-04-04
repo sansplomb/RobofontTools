@@ -25,3 +25,5 @@ glyphs measurements. May be useful to define a CVT Table as well.
 <b>- CheckGlyphIntegrity:</b> Script checking for glyphs with: mixed contours and components, overlapping components, overlapping contours. Highlight them and prints a report.
 
 <b>- ExpandKerning:</b> Expand group (class) kerning to flat kerning, delete groups.
+
+<b>: Generate Font:</b> Generate font window, add the possibility to export <kern> table.
