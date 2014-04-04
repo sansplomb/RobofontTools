@@ -26,4 +26,4 @@ glyphs measurements. May be useful to define a CVT Table as well.
 
 <b>- ExpandKerning:</b> Expand group (class) kerning to flat kerning, delete groups.
 
-<b>- Generate Font:</b> Generate font window, add the possibility to export <kern> table.
+<b>- GenerateFont:</b> Generate font window, add the possibility to export <kern> table.
