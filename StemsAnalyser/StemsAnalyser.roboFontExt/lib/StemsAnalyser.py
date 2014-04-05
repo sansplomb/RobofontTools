@@ -316,13 +316,13 @@ def makeStemsList(f, g_hPoints, g, italicAngle):
 						
 						## if they are horizontal, treat the stem on the Y axis
 						if (isHorizontal(angleIn_source) or isHorizontal(angleOut_source)) and (isHorizontal(angleIn_target) or isHorizontal(angleOut_target)):
-							if (minStemY < c_distance[1] < maxStemY) and (minStemY <= hypoth <= maxStemY):
+							if (minStemY < c_distance[1] < maxStemY):
 								stemsListY_temp.append(stem)
 								
 						## if they are vertical, treat the stem on the X axis		
 						if (isVertical(angleIn_source) or isVertical(angleOut_source)) and (isVertical(angleIn_target) or isVertical(angleOut_target)):
 							
-							if (minStemX <= c_distance[0] <= maxStemX) and (minStemX <= hypoth <= maxStemX):
+							if (minStemX <= c_distance[0] <= maxStemX):
 								stemsListX_temp.append(stem)
 	# avoid duplicates, filters temporary stems
 	yList = []
