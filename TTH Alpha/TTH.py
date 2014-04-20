@@ -95,15 +95,16 @@ class TTHTool(BaseEventTool):
 		tempFont.newGlyph(self.g.name)
 		tempFont[self.g.name] = tempGlyph
 
-		tempFont.generate(self.path, 'ttf', decompose = False, checkOutlines = False, autohint = False, releaseMode = False, glyphOrder=None, progressBar = None )
+		tempFont.generate(self.tempfontpath, 'ttf', decompose = False, checkOutlines = False, autohint = False, releaseMode = False, glyphOrder=None, progressBar = None )
+
 
 	def deleteTempFont(self):
-		os.remove(self.path)
+		os.remove(self.tempfontpath)
 
 
 	def loadFaceGlyph(self):
 		#freetype.get_handle()
-		face = freetype.Face(self.path)
+		face = freetype.Face(self.tempfontpath)
 		#face.set_char_size(size)
 		face.set_pixel_sizes(int(self.PPM_Size), int(self.PPM_Size))
 		#face.load_char(self.g.name)
@@ -468,7 +469,9 @@ class TTHTool(BaseEventTool):
 
 		self.f = CurrentFont()
 		self.g = CurrentGlyph()
-		self.path = '/Users/jeremiehornus/Desktop/temp.ttf'
+		root =  os.path.split(self.f.path)[0]
+		trail = 'temp.ttf'
+		self.tempfontpath = os.path.join(root, trail)
 		self.UPM = CurrentFont().info.unitsPerEm
 		self.PPM_Size = 9
 		self.pitch = self.UPM / self.PPM_Size
