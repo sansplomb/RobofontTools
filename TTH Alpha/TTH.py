@@ -141,10 +141,6 @@ class TTHTool(BaseEventTool):
 
 	def prepareGlyph(self):
 		self.g = CurrentGlyph()
-		TTH_backup = self.g.getLayer("TTH_backup")
-		self.g.copyToLayer("TTH_backup")
-		TTH_backup.update()
-		self.g.update()
 
 		myPen = self.g.getPen()
 		myPen.moveTo((0, 0))
@@ -152,20 +148,6 @@ class TTHTool(BaseEventTool):
 		myPen.moveTo((self.g.width, 0))
 		myPen.closePath()
 		self.g.update()
-
-	def visitedGlyph(self, glyph):
-		f = glyph.getParent()
-		libName = "com.sansplomb.TTH_prepared"
-		if libName in f.lib.keys():
-			if glyph.name in f.lib[libName].keys() and f.lib[libName][glyph.name] == True:
-				return True
-			else:
-				f.lib[libName][glyph.name] = True
-				return False
-		else:
-			f.lib[libName] = {}
-			f.lib[libName][glyph.name] = True
-			return False
 
 	def isOnPoint(self, p_cursor):
 		def pred0(p_glyph):
@@ -478,7 +460,9 @@ class TTHTool(BaseEventTool):
 		self.g = CurrentGlyph()
 		if self.g == None:
 			return
-		self.g.flipLayers("foreground", "TTH_backup")
+		self.g.removeContour(len(self.g)-1)
+		self.g.removeContour(len(self.g)-1)
+		#self.g.flipLayers("foreground", "TTH_backup")
 
 	def becomeActive(self):
 
@@ -606,11 +590,13 @@ class TTHTool(BaseEventTool):
 	def viewDidChangeGlyph(self):
 
 		if self.previousGlyph != None:
-			self.previousGlyph.flipLayers("foreground", "TTH_backup")
+			self.previousGlyph.removeContour(len(self.previousGlyph)-1)
+			self.previousGlyph.removeContour(len(self.previousGlyph)-1)
 
 		self.g = CurrentGlyph()
 		if self.g == None:
 			return
+		self.prepareGlyph()
 		self.generateTempFont()
 		self.loadFaceGlyph()
 		f = CurrentFont()
@@ -618,11 +604,6 @@ class TTHTool(BaseEventTool):
 		self.p_glyphList = []
 		self.startPoint = None
 		self.startPoint = None
-
-		if self.visitedGlyph(self.g) == False or ("TTH_backup" not in f.layerOrder) or (len(self.g.getLayer("TTH_backup")) != len(self.g)+2):
-			self.prepareGlyph()
-		else:
-			self.g.flipLayers("foreground", "TTH_backup")
 
 		for c in self.g:
 			for p in c.points:
