@@ -30,6 +30,7 @@ def getAngle((x1, y1), (x2, y2)):
 	yDiff= y2-y1 
 	return math.atan2(yDiff,xDiff)
 
+toolbarIcon = ExtensionBundle("TTH").get("toolbarIcon")
 
 class hintTT(object):
 	def __init__(self, axis, instructionType, inPointIndex, outPointIndex, controlValue):
@@ -72,10 +73,10 @@ class TTHTool(BaseEventTool):
 	### TTH Tool Icon ###
 	def getToolbarIcon(self):
 		## return the toolbar icon
-		return ExtensionBundle("CustomTool").get("toolbarIcon")
+		return toolbarIcon
 		
 	def getToolbarTip(self):
-		return "Hinting Tool"
+		return "TTH Hinting Tool"
 	###############
 
 	### TTH freetype ###

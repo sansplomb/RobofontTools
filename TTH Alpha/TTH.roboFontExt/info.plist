@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>addToMenu</key>
+	<array/>
+	<key>developer</key>
+	<string>Jeremie Hornus</string>
+	<key>developerURL</key>
+	<string>https://github.com/sansplomb/</string>
+	<key>html</key>
+	<false/>
+	<key>launchAtStartUp</key>
+	<integer>0</integer>
+	<key>mainScript</key>
+	<string></string>
+	<key>name</key>
+	<string>TTH</string>
+	<key>requiresVersionMajor</key>
+	<string>1</string>
+	<key>requiresVersionMinor</key>
+	<string>5</string>
+	<key>timeStamp</key>
+	<real>1397987588.273319</real>
+	<key>version</key>
+	<string>0.1</string>
+</dict>
+</plist>
