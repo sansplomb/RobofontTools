@@ -27,3 +27,5 @@ glyphs measurements. May be useful to define a CVT Table as well.
 <b>- ExpandKerning:</b> Expand group (class) kerning to flat kerning, delete groups.
 
 <b>- GenerateFont:</b> Generate font window, add the possibility to export kern table.
+
+<b>- ConvertToQuadratic:</b> Generates a new UFO with Quadratic (TrueType) curves.
