@@ -41,6 +41,13 @@ class hintTT(object):
 		self.controlValue = controlValue
 		sharedInstance = self
 
+class TTH_Set(object):
+	def __init__(self, axis, set_type, instructions):
+		self.axis = axis
+		self.set_type = set_type
+		self.instructions = instructions
+
+
 class CallBackCVT():
 	def __init__(self, controlValue, TTHtoolInstance):
 		self.index = controlValue[0]
@@ -101,6 +108,19 @@ class TTHTool(BaseEventTool):
 
 	def deleteTempFont(self):
 		os.remove(self.tempfontpath)
+
+	def loadGeneratedGlyphIntoLayer(self):
+		tempUFO = OpenFont(self.tempfontpath, showUI=False)
+		for temp_g in tempUFO:
+			if temp_g.name == self.g.name:
+				sourceLayer = temp_g.getLayer("foreground")
+				targetLayer = self.g.getLayer("TTH_workingSpace")
+				targetLayer.clear()
+		 		targetWidth = self.g.width
+		 		self.g.flipLayers("foreground", "TTH_workingSpace")
+		 		self.f[self.g.name] = temp_g.copy()
+		 		self.f[self.g.name].width = targetWidth
+		 		self.g.update()
 
 
 	def loadFaceGlyph(self):
@@ -180,47 +200,77 @@ class TTHTool(BaseEventTool):
 					return self.g[c_index].points[p_index]
 		return None
 
-	def store_hint(self, hintTT):
-		f = self.g.getParent()
-		libName = "com.sansplomb.TTH_Hints"
-		if libName in f.lib.keys():
-			if self.g.name in f.lib[libName].keys():
+	def store_TTH_Set(self, TTH_Set):
+		libName = "com.sansplomb.TTH_Sets"
+		if libName in self.f.lib.keys():
+			if self.g.name in self.f.lib[libName].keys():
 				#store undo
 				if self.g.name in self.undoStorage.keys():
 					storeundo_glyphList = self.undoStorage[self.g.name]
-					storeundo_glyphList.append(str(len(f.lib[libName][self.g.name].keys())))
+					storeundo_glyphList.append(str(len(self.f.lib[libName][self.g.name].keys())))
 					self.undoStorage[self.g.name] = storeundo_glyphList
-					#print 'undo storage', self.undoStorage[self.g.name]
 				else:
-					self.undoStorage[self.g.name] = [str(len(f.lib[libName][self.g.name].keys()))]
-					#print 'undo storage', self.undoStorage[self.g.name]
+					self.undoStorage[self.g.name] = [str(len(self.f.lib[libName][self.g.name].keys()))]
 				#clear redostorage
 				self.redoStorage[self.g.name] = []
-
 				#store instruction
-				f.lib[libName][self.g.name][str(len(f.lib[libName][self.g.name].keys()))] = (hintTT.axis, hintTT.instructionType, hintTT.inPointIndex, hintTT.outPointIndex, hintTT.controlValue)
+				self.f.lib[libName][self.g.name][str(len(self.f.lib[libName][self.g.name].keys()))] = (TTH_Set.axis, TTH_Set.set_type, TTH_Set.instructions)
 			else:
 				#store undo
 				self.undoStorage[self.g.name] = [0]
 				#print 'undo storage', self.undoStorage[self.g.name]
 				#clear redostorage
 				self.redoStorage[self.g.name] = []
-
 				#store instruction
-				f.lib[libName][self.g.name] = {}
-				f.lib[libName][self.g.name]["0"] = (hintTT.axis, hintTT.instructionType, hintTT.inPointIndex, hintTT.outPointIndex, hintTT.controlValue)
-				
+				self.f.lib[libName][self.g.name] = {}
+				self.f.lib[libName][self.g.name]["0"] = (TTH_Set.axis, TTH_Set.set_type, TTH_Set.instructions)
+
 		else:
 			#store redostorage
 			self.undoStorage[self.g.name] = ["0"]
 			#clear redo
 			self.redoStorage[self.g.name] = []
 			#store instruction
-			f.lib[libName] = {}
-			f.lib[libName][self.g.name] = {}
-			f.lib[libName][self.g.name]["0"] = (hintTT.axis, hintTT.instructionType, hintTT.inPointIndex, hintTT.outPointIndex, hintTT.controlValue)
+			self.f.lib[libName] = {}
+			self.f.lib[libName][self.g.name] = {}
+			self.f.lib[libName][self.g.name]["0"] = (TTH_Set.axis, TTH_Set.set_type, TTH_Set.instructions)
 
-	def drawHint(self, scale, startPoint, currentPoint, axis):
+
+	def read_TTH_Sets(self):
+		libName = "com.sansplomb.TTH_Sets"
+		if libName in self.f.lib.keys():
+			if self.g.name in self.f.lib[libName].keys():
+				#Set the axis of freedom and projection vectors
+				Y_instructions = ['SVTCA[0]']
+				X_instructions = ['SVTCA[1]']
+				TTH_instructions = []
+				for TTH_Set_index in self.f.lib[libName][self.g.name]:
+					axis = self.f.lib[libName][self.g.name][TTH_Set_index][0]
+					set_type = self.f.lib[libName][self.g.name][TTH_Set_index][1]
+					set_instructions = self.f.lib[libName][self.g.name][TTH_Set_index][2]
+					if axis == 'X':
+						X_instructions.extend(set_instructions)
+					elif axis == 'Y':
+						Y_instructions.extend(set_instructions)
+	
+				TTH_instructions.extend(Y_instructions)
+				TTH_instructions.extend(['IUP[0]'])
+				TTH_instructions.extend(X_instructions)
+				TTH_instructions.extend(['IUP[1]'])
+				
+				return TTH_instructions
+
+		return None
+
+
+	def write_TTH_Sets_ToGlyph(self, TTH_instructions):
+		if 'com.robofont.robohint.assembly' in self.g.lib.keys():
+			self.g.lib['com.robofont.robohint.assembly'].extend(TTH_instructions)
+		else:
+			self.g.lib['com.robofont.robohint.assembly'] = TTH_instructions
+
+
+	def drawLink(self, scale, axis, startPoint, currentPoint):
 	 	
 	 	start_current_diff = difference(currentPoint, startPoint)
 	 	dx, dy = -start_current_diff[1]/2, start_current_diff[0]/2
@@ -416,7 +466,7 @@ class TTHTool(BaseEventTool):
 
 	def keyDown(self, event):
 		f = self.g.getParent()
-		libName = "com.sansplomb.TTH_Hints"
+		libName = "com.sansplomb.TTH_Sets"
 		if self.modifiersChanged() and event.characters() == 'z':
 			#UNDO action
 			if len(self.undoStorage) != 0 and self.g.name in self.undoStorage.keys() and len(self.undoStorage[self.g.name]) != 0:
@@ -462,22 +512,27 @@ class TTHTool(BaseEventTool):
 		self.g = CurrentGlyph()
 		if self.g == None:
 			return
-		self.g.removeContour(len(self.g)-1)
-		self.g.removeContour(len(self.g)-1)
-		#self.g.flipLayers("foreground", "TTH_backup")
+		#self.g.removeContour(len(self.g)-1)
+		#self.g.removeContour(len(self.g)-1)
+		self.g.flipLayers("foreground", "TTH_workingSpace")
+		self.f.removeLayer("TTH_workingSpace")
 
 	def becomeActive(self):
 
 		self.f = CurrentFont()
 		self.g = CurrentGlyph()
 		root =  os.path.split(self.f.path)[0]
-		trail = 'temp.ttf'
-		self.tempfontpath = os.path.join(root, trail)
+		tail = 'temp.ttf'
+		self.tempfontpath = os.path.join(root, tail)
 		self.UPM = CurrentFont().info.unitsPerEm
 		self.PPM_Size = 9
 		self.pitch = self.UPM / self.PPM_Size
 
 		self.previousGlyph  = None
+
+		### Initialize currentTool ###
+
+		self.currentTool = 'Link_RoundToGrid'
 
 		#### Initializing CVT ####
 		self.CVT_Index = []
@@ -586,6 +641,27 @@ class TTHTool(BaseEventTool):
 			return
 		self.generateTempFont()
 
+	def reset(self):
+
+		self.generateTempFont()
+		self.loadGeneratedGlyphIntoLayer()
+		self.prepareGlyph()
+		self.loadFaceGlyph()
+		UpdateCurrentGlyphView()
+
+		self.p_glyphList = []
+		self.startPoint = None
+		self.endPoint = None
+
+		for c in self.g:
+			for p in c.points:
+				if p.type != 'offCurve':
+					self.p_glyphList.append(p)
+		self.g.update()
+
+		self.currentTool = None
+		self.controlValueIndex = None
+
 	def viewWillChangeGlyph(self):
 		if self.g == None:
 			return
@@ -594,49 +670,49 @@ class TTHTool(BaseEventTool):
 	def viewDidChangeGlyph(self):
 
 		if self.previousGlyph != None:
-			self.previousGlyph.removeContour(len(self.previousGlyph)-1)
-			self.previousGlyph.removeContour(len(self.previousGlyph)-1)
+			#self.previousGlyph.removeContour(len(self.previousGlyph)-1)
+			#self.previousGlyph.removeContour(len(self.previousGlyph)-1)
+			self.previousGlyph.flipLayers("foreground", "TTH_workingSpace")
+			self.f.removeLayer("TTH_workingSpace")
 
 		self.g = CurrentGlyph()
+		self.f = CurrentFont()
 		if self.g == None:
 			return
-		self.prepareGlyph()
-		self.generateTempFont()
-		self.loadFaceGlyph()
-		f = CurrentFont()
-		self.redoStorage[self.g.name] = []
-		self.p_glyphList = []
-		self.startPoint = None
-		self.startPoint = None
 
-		for c in self.g:
-			for p in c.points:
-				if p.type != 'offCurve':
-					self.p_glyphList.append(p)
-		self.g.update()	
+		TTH_instructions = self.read_TTH_Sets()
+		if TTH_instructions != None:
+			self.write_TTH_Sets_ToGlyph(TTH_instructions)
+
+		self.reset()
 
 	def mouseDown(self, point, clickCount):
 
 		self.p_cursor = (int(point.x), int(point.y))
 		self.startPoint = self.isOnPoint(self.p_cursor)
+		self.controlValueIndex = None
+		self.currentTool = None
 
 	def roundToGridCallback(self, controlValue):
-		print 'hello'
-
+		self.currentTool = 'Link_RoundToGrid'
+		self.controlValueIndex = None
 
 	def mouseUp(self, point):
 
 		self.p_cursor = (int(point.x), int(point.y))
 		self.endPoint = self.isOnPoint(self.p_cursor)
 
-		if self.startPoint != self.endPoint and self.startPoint != None and self.startPoint != None:
+		#print self.startPoint, self.endPoint
+
+		if self.startPoint != self.endPoint and self.startPoint != None and self.endPoint != None:
+			#print 'touched'
 			inPointIndex = self.getPointIndex(self.startPoint)
 			outPointIndex = self.getPointIndex(self.endPoint)
-
+			#print inPointIndex, outPointIndex
 			if outPointIndex != None and inPointIndex != None:
 				#### Pre-sets for Hint type and CV ###
-				self.controlValueIndex = None
-				self.instructionType = 'link'
+				
+				#self.instructionType = 'link'
 				######################################	
 
 				self.menuCVT = NSMenu.alloc().init()
@@ -657,10 +733,26 @@ class TTHTool(BaseEventTool):
 
 				if self.controlValueIndex != None:
 					print 'CV Selected index:', self.controlValueIndex
-					c_hint = hintTT(self.toolAxis, self.instructionType, inPointIndex, outPointIndex, self.controlValueIndex)
-					self.store_hint(c_hint)
-				else:
-					print 'no CV selected'
+				elif self.currentTool == 'Link_RoundToGrid':
+					print 'Link_RoundToGrid'
+
+					instructions = [
+									'PUSHW[ ] ' + str(inPointIndex),
+									'MDAP[1]',
+									'PUSHW[ ] ' + str(outPointIndex),
+									'MDRP[00100]'
+									]
+
+					c_Link_RountToGrid = TTH_Set(self.toolAxis, self.currentTool, instructions)
+					self.store_TTH_Set(c_Link_RountToGrid)
+
+					TTH_instructions = self.read_TTH_Sets()
+					#print TTH_instructions
+					self.write_TTH_Sets_ToGlyph(TTH_instructions)
+
+					self.g.flipLayers("foreground", "TTH_workingSpace")
+					self.f.removeLayer("TTH_workingSpace")
+					self.reset()
 
 	def draw(self, scale):
 		if self.isDragging() and self.startPoint != None:
@@ -671,7 +763,7 @@ class TTHTool(BaseEventTool):
 			NSColor.colorWithRed_green_blue_alpha_(0, 1, 1, .5).set()
 			NSBezierPath.bezierPathWithOvalInRect_(((x_start-r, y_start-r), (r*2, r*2))).fill()
 
-			self.drawHint(scale, self.startPoint, self.currentPoint, self.toolAxis)
+			self.drawLink(scale, self.toolAxis, self.startPoint, self.currentPoint)
 
 			touchedEnd = self.isOnPoint(self.currentPoint)
 			if touchedEnd != None:
@@ -680,22 +772,21 @@ class TTHTool(BaseEventTool):
 				NSColor.colorWithRed_green_blue_alpha_(0, 1, 1, .5).set()
 				NSBezierPath.bezierPathWithOvalInRect_(((x_end-r, y_end-r), (r*2, r*2))).fill()
 
-		f = self.g.getParent()
-		if f.lib and "com.sansplomb.TTH_Hints" in f.lib.keys() and self.g.name in f.lib["com.sansplomb.TTH_Hints"].keys():
-			for key in f.lib["com.sansplomb.TTH_Hints"][self.g.name].keys():
-				(axis, instructionType, inPointIndex, outPointIndex, controlValue) = f.lib["com.sansplomb.TTH_Hints"][self.g.name][key]
-				try:
+		if self.f.lib and "com.sansplomb.TTH_Sets" in self.f.lib.keys() and self.g.name in self.f.lib["com.sansplomb.TTH_Sets"].keys():
+			for key in self.f.lib["com.sansplomb.TTH_Sets"][self.g.name].keys():
+				(axis, set_type, instructions)= self.f.lib["com.sansplomb.TTH_Sets"][self.g.name][key]
+				if set_type == 'Link_RoundToGrid':
+					inPointIndex = int(instructions[0].split(' ')[-1:][0])
+					outPointIndex = int(instructions[2].split(' ')[-1:][0])
 					if self.displayX == True and self.displayY == True:
-						self.drawHint(scale, self.getPointByIndex(inPointIndex), self.getPointByIndex(outPointIndex), axis)
-					elif self.displayY == False and self.displayX == True and axis == 'X':
-						self.drawHint(scale, self.getPointByIndex(inPointIndex), self.getPointByIndex(outPointIndex), axis)
-					elif self.displayX == False and self.displayY == True and axis == 'Y':
-						self.drawHint(scale, self.getPointByIndex(inPointIndex), self.getPointByIndex(outPointIndex), axis)
-					else:
-						continue
+						self.drawLink(scale, axis, self.getPointByIndex(inPointIndex), self.getPointByIndex(outPointIndex))
 
-				except AttributeError:
-					return
+					elif self.displayY == False and self.displayX == True and axis == 'X':
+						self.drawLink(scale, axis, self.getPointByIndex(inPointIndex), self.getPointByIndex(outPointIndex))
+
+					elif self.displayX == False and self.displayY == True and axis == 'Y':
+						self.drawLink(scale, axis, self.getPointByIndex(inPointIndex), self.getPointByIndex(outPointIndex))
+		
 
 	def drawBackground(self, scale):
 		#self.drawBitmap()
