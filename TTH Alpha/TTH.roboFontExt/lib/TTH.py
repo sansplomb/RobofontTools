@@ -284,10 +284,10 @@ class TTHTool(BaseEventTool):
 		r = 10
 	 	arrowAngle = math.radians(20)
 	 	initAngle = getAngle((currentPoint.x, currentPoint.y), (offcurve2[0], offcurve2[1]))
-	 	arrowPoint1_x = currentPoint.x + math.cos(initAngle+arrowAngle)*r
-		arrowPoint1_y = currentPoint.y + math.sin(initAngle+arrowAngle)*r
-		arrowPoint2_x = currentPoint.x + math.cos(initAngle-arrowAngle)*r
-		arrowPoint2_y = currentPoint.y + math.sin(initAngle-arrowAngle)*r
+	 	arrowPoint1_x = currentPoint.x + math.cos(initAngle+arrowAngle)*r*scale
+		arrowPoint1_y = currentPoint.y + math.sin(initAngle+arrowAngle)*r*scale
+		arrowPoint2_x = currentPoint.x + math.cos(initAngle-arrowAngle)*r*scale
+		arrowPoint2_y = currentPoint.y + math.sin(initAngle-arrowAngle)*r*scale
 		endPoint_x = (arrowPoint1_x + arrowPoint2_x) / 2
 		endPoint_y = (arrowPoint1_y + arrowPoint2_y) / 2
 
@@ -495,6 +495,10 @@ class TTHTool(BaseEventTool):
 			else:
 				return
 
+			self.g.flipLayers("foreground", "TTH_workingSpace")
+			self.f.removeLayer("TTH_workingSpace")
+			self.reset()
+
 
 		if self.modifiersChanged() and event.characters() == 'y':
 			if len(self.redoStorage[self.g.name]) != 0:
@@ -504,6 +508,16 @@ class TTHTool(BaseEventTool):
 				storeundo_glyphList = self.undoStorage[self.g.name]
 				storeundo_glyphList.append(str(len(self.undoStorage[self.g.name])))
 				self.undoStorage[self.g.name] = storeundo_glyphList
+
+
+			self.g.flipLayers("foreground", "TTH_workingSpace")
+			self.f.removeLayer("TTH_workingSpace")
+
+			TTH_instructions = self.read_TTH_Sets()
+			if TTH_instructions != None:
+				self.write_TTH_Sets_ToGlyph(TTH_instructions)
+
+			self.reset()
 
 
 		UpdateCurrentGlyphView()
@@ -782,8 +796,7 @@ class TTHTool(BaseEventTool):
 									'MDAP[1]',
 									'PUSHW[ ] ' + str(outPointIndex),
 									'PUSHB[ ] ' + str(self.controlValueIndex),
-									#'MIAP[1]'
-									'MIRP[01101]'
+									'MIRP[00101]'
 									]
 					c_Link_CVT = TTH_Set(self.toolAxis, self.currentTool, instructions)
 					self.store_TTH_Set(c_Link_CVT)
@@ -809,7 +822,7 @@ class TTHTool(BaseEventTool):
 					self.store_TTH_Set(c_Link_RountToGrid)
 
 					TTH_instructions = self.read_TTH_Sets()
-					#print TTH_instructions
+					print TTH_instructions
 					self.write_TTH_Sets_ToGlyph(TTH_instructions)
 
 					self.g.flipLayers("foreground", "TTH_workingSpace")
