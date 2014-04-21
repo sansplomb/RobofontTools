@@ -546,10 +546,6 @@ class TTHTool(BaseEventTool):
 
 		self.previousGlyph  = None
 
-		### Initialize currentTool ###
-
-		self.currentTool = 'Link_RoundToGrid'
-
 		#### Initializing CVT ####
 		self.CVT_Index = []
 		self.CVT_Names = []
@@ -763,10 +759,6 @@ class TTHTool(BaseEventTool):
 			outPointIndex = self.getPointIndex(self.endPoint)
 			#print inPointIndex, outPointIndex
 			if outPointIndex != None and inPointIndex != None:
-				#### Pre-sets for Hint type and CV ###
-				
-				#self.instructionType = 'link'
-				######################################	
 
 				self.menuCVT = NSMenu.alloc().init()
 				separator = NSMenuItem.separatorItem()
@@ -867,12 +859,8 @@ class TTHTool(BaseEventTool):
 
 					elif self.displayX == False and self.displayY == True and axis == 'Y':
 						self.drawLink(scale, axis, self.getPointByIndex(inPointIndex), self.getPointByIndex(outPointIndex))
-						
-					
-
-
-		
-
+	
+	
 	def drawBackground(self, scale):
 		#self.drawBitmap()
 		if self.wTools.boxView.monoCheckBox.get() == True:
