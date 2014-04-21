@@ -1,7 +1,6 @@
 #coding=utf-8
 from lib.fontObjects.doodleFontCompiler.ttfCompiler import TTFCompilerSettings
 from lib.doodleMenus import BaseMenu
-from defconAppKit.windows.popUpWindow import InteractivePopUpWindow
 from mojo.events import *
 from mojo.extensions import *
 from mojo.UI import *
@@ -59,6 +58,7 @@ class CallBackCVT():
 		#print self.index, self.name, self.value
 		controlValueIndex = self.index
 		self.TTHtoolInstance.set_currentControlValue(controlValueIndex)
+		self.TTHtoolInstance.set_currentTool('Link_CVT')
 
 class TTHTool(BaseEventTool):
 
@@ -67,14 +67,14 @@ class TTHTool(BaseEventTool):
 		self.g = CurrentGlyph()
 		self.undoStorage = {}
 		self.redoStorage = {}
-		self.toolAxis = "Y"
-		self.displayX = True
-		self.displayY = True
 
 	##############
 
 	def set_currentControlValue(self, controlValueIndex):
 		self.controlValueIndex = controlValueIndex
+
+	def set_currentTool(self, currentTool):
+		self.currentTool = currentTool
 	##############
 
 	### TTH Tool Icon ###
@@ -100,10 +100,15 @@ class TTHTool(BaseEventTool):
 		tempFont.info.familyName = CurrentFont().info.familyName
 		tempFont.info.styleName = CurrentFont().info.styleName
 
+		tempFont.lib['com.robofont.robohint.cvt '] = CurrentFont().lib['com.robofont.robohint.cvt ']
+		tempFont.lib['com.robofont.robohint.prep'] = CurrentFont().lib['com.robofont.robohint.prep']
+		tempFont.lib['com.robofont.robohint.fpgm'] = CurrentFont().lib['com.robofont.robohint.fpgm']
+
+
 		tempFont.newGlyph(self.g.name)
 		tempFont[self.g.name] = tempGlyph
 
-		tempFont.generate(self.tempfontpath, 'ttf', decompose = False, checkOutlines = False, autohint = False, releaseMode = False, glyphOrder=None, progressBar = None )
+		tempFont.generate(self.tempfontpath, 'ttf', decompose = False, checkOutlines = False, autohint = False, releaseMode = True, glyphOrder=None, progressBar = None )
 
 
 	def deleteTempFont(self):
@@ -518,6 +523,9 @@ class TTHTool(BaseEventTool):
 		self.f.removeLayer("TTH_workingSpace")
 
 	def becomeActive(self):
+		self.toolAxis = "Y"
+		self.displayX = True
+		self.displayY = True
 
 		self.f = CurrentFont()
 		self.g = CurrentGlyph()
@@ -557,11 +565,48 @@ class TTHTool(BaseEventTool):
 		#####################
 
 		### Initializing FPGM #####
-		self.FPGM = ['PUSHB[ ] 0' , 'PUSHB[] 3']
+		self.FPGM = [	'PUSHB[ ] 0',
+						'FDEF [ ]',
+						'RCVT[ ]',
+						'ROUND[01]',
+						'WCVTP[ ]',
+						'ENDF[ ]'
+					]
 		if 'com.robofont.robohint.fpgm' in self.f.lib.keys():
 			self.FPGM = self.f.lib['com.robofont.robohint.fpgm']
 		else:
 			 self.f.lib['com.robofont.robohint.fpgm'] = self.FPGM
+
+		####################
+
+		### Initializing PREP #####
+		self.PREP = [	'PUSHW[ ] 511',
+						'SCANCTRL[ ]',
+						'PUSHB[ ] 70',
+						'SCVTCI[ ]',
+
+						'MPPEM[ ]',
+						'PUSHB[ ] 50',
+						'GT[ ]',
+						'IF[ ]',
+						'PUSHB[ ] 128',
+						'SCVTCI[ ]',
+						'EIF[]',
+
+						'PUSHB[ ] 0',
+						'SZPS[]',
+
+						'PUSHB[ ] 0 1',
+						'MIAP[1]'
+
+
+					]
+
+
+		if 'com.robofont.robohint.prep' in self.f.lib.keys():
+			self.PREP = self.f.lib['com.robofont.robohint.prep']
+		else:
+			 self.f.lib['com.robofont.robohint.prep'] = self.PREP
 
 		####################
 
@@ -732,7 +777,24 @@ class TTHTool(BaseEventTool):
 				NSMenu.popUpContextMenu_withEvent_forView_(self.menuCVT, self.getCurrentEvent(), self.getNSView())
 
 				if self.controlValueIndex != None:
-					print 'CV Selected index:', self.controlValueIndex
+					print 'CV Selected index:', self.controlValueIndex, inPointIndex, outPointIndex
+					instructions = ['PUSHW[ ] ' + str(inPointIndex),
+									'MDAP[1]',
+									'PUSHW[ ] ' + str(outPointIndex),
+									'PUSHB[ ] ' + str(self.controlValueIndex),
+									#'MIAP[1]'
+									'MIRP[01101]'
+									]
+					c_Link_CVT = TTH_Set(self.toolAxis, self.currentTool, instructions)
+					self.store_TTH_Set(c_Link_CVT)
+					TTH_instructions = self.read_TTH_Sets()
+					print TTH_instructions
+					self.write_TTH_Sets_ToGlyph(TTH_instructions)
+
+					self.g.flipLayers("foreground", "TTH_workingSpace")
+					self.f.removeLayer("TTH_workingSpace")
+					self.reset()
+
 				elif self.currentTool == 'Link_RoundToGrid':
 					print 'Link_RoundToGrid'
 
@@ -786,6 +848,22 @@ class TTHTool(BaseEventTool):
 
 					elif self.displayX == False and self.displayY == True and axis == 'Y':
 						self.drawLink(scale, axis, self.getPointByIndex(inPointIndex), self.getPointByIndex(outPointIndex))
+
+				if set_type == 'Link_CVT':
+					inPointIndex = int(instructions[0].split(' ')[-1:][0])
+					outPointIndex = int(instructions[2].split(' ')[-1:][0])
+					if self.displayX == True and self.displayY == True:
+						self.drawLink(scale, axis, self.getPointByIndex(inPointIndex), self.getPointByIndex(outPointIndex))
+
+					elif self.displayY == False and self.displayX == True and axis == 'X':
+						self.drawLink(scale, axis, self.getPointByIndex(inPointIndex), self.getPointByIndex(outPointIndex))
+
+					elif self.displayX == False and self.displayY == True and axis == 'Y':
+						self.drawLink(scale, axis, self.getPointByIndex(inPointIndex), self.getPointByIndex(outPointIndex))
+						
+					
+
+
 		
 
 	def drawBackground(self, scale):
