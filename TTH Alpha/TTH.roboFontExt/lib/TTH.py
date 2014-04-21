@@ -31,14 +31,6 @@ def getAngle((x1, y1), (x2, y2)):
 
 toolbarIcon = ExtensionBundle("TTH").get("toolbarIcon")
 
-class hintTT(object):
-	def __init__(self, axis, instructionType, inPointIndex, outPointIndex, controlValue):
-		self.axis = axis
-		self.instructionType = instructionType
-		self.inPointIndex = inPointIndex
-		self.outPointIndex = outPointIndex
-		self.controlValue = controlValue
-		sharedInstance = self
 
 class TTH_Set(object):
 	def __init__(self, axis, set_type, instructions):
@@ -143,6 +135,8 @@ class TTHTool(BaseEventTool):
 		elif self.wTools.boxView.subpixelCheckBox.get() == True:
 			face.load_glyph(2, freetype.FT_LOAD_RENDER |
                         freetype.FT_LOAD_TARGET_LCD )
+		else:
+			face.load_glyph(2)
 
 		self.bitmap_buffer = face.glyph.bitmap.buffer
 		self.bitmap_width  = face.glyph.bitmap.width
