@@ -167,7 +167,7 @@ extrasS = {
 		'ibreve': [['dotlessi'], ['breve']],
 		'i.dot': [['i'], []],
 		'imacron': [['dotlessi'], ['macron']],
-		'iogonek': [['dotlessi'], ['ogonek']],
+		'iogonek': [['i'], ['ogonek']],
 		'itilde': [['dotlessi'], ['tilde']],
 		'jcircumflex': [['dotlessj'], ['circumflex']],
 		'ij': [['i', 'j'], []],
@@ -880,6 +880,7 @@ class Process(BaseWindowController):
 			f[i].width = 0
 			yShift = 0
 			xShift = 0
+			markColor = (0, 1, 1, 0.5)
 			for base in basesNames:
 				if base.isupper():
 					yShift = yShiftCaps
@@ -893,11 +894,10 @@ class Process(BaseWindowController):
 				if accent == 'ogonek' or accent == 'cedilla' or accent == 'slash' or accent == 'commaaccent' or accent == 'caron.alt' or accent == 'periodcentered':
 					yShift = 0
 				f[i].appendComponent(accent, ((f[i].width/2 - f[accent].width/2)+xShift, yShift))
-			markColor = (0, 1, 1, 0.5)
 			if i in toBeDecomposed:
 				markColor = (0, 1, 0, 0.5)
 				for j in f[i].components:
-				    j.decompose()
+					j.decompose()
 			elif i in metricsAdjust:
 				markColor = (0, 0, 1, 0.5)
 			f[i].mark = markColor
