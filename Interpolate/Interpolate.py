@@ -521,8 +521,8 @@ class InterpolateWindow(object):
 			for j in range(len(gS[i].points)):
 				sourcePoint = self.allSourcePoints[i][j]
 				targetPoint = self.allTargetPoints[i][j]
-				gI[i].points[j].x = (sourcePoint[0] + ((targetPoint[0] - sourcePoint[0]) * valueX/1000)) * self.scaleXValue/100
-				gI[i].points[j].y = (sourcePoint[1] + ((targetPoint[1] - sourcePoint[1]) * valueY/1000)) * self.scaleYValue/100
+				gI[i].points[j].x = int((sourcePoint[0] + ((targetPoint[0] - sourcePoint[0]) * valueX/1000)) * self.scaleXValue/100)
+				gI[i].points[j].y = int((sourcePoint[1] + ((targetPoint[1] - sourcePoint[1]) * valueY/1000)) * self.scaleYValue/100)
 				gI.width = (gS.width + ((gT.width - gS.width) * valueX/1000)) * self.scaleXValue/100
 		return gI
 			
