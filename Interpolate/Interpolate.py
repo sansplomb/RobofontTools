@@ -523,7 +523,7 @@ class InterpolateWindow(object):
 				targetPoint = self.allTargetPoints[i][j]
 				gI[i].points[j].x = int((sourcePoint[0] + ((targetPoint[0] - sourcePoint[0]) * valueX/1000)) * self.scaleXValue/100)
 				gI[i].points[j].y = int((sourcePoint[1] + ((targetPoint[1] - sourcePoint[1]) * valueY/1000)) * self.scaleYValue/100)
-				gI.width = int((gS.width + ((gT.width - gS.width) * valueX/1000)) * self.scaleXValue/100)
+		gI.width = int((gS.width + ((gT.width - gS.width) * valueX/1000)) * self.scaleXValue/100)
 		return gI
 			
 	def collaPolate(self, gS, gT, barIncrement):
@@ -569,10 +569,10 @@ class InterpolateWindow(object):
 			if self.new:
 				self.newFont.newGlyph(gI.name)
 				self.newFont[gI.name] = gI
-				self.newFont[gI.name].update()
+				#self.newFont[gI.name].update()
 			else:
 				self.sourceFont[gI.name] = gI
-				self.sourceFont[gI.name].update()
+				#self.sourceFont[gI.name].update()
 							
 	def buttonOKCallback(self, sender):
 		self.new = False
