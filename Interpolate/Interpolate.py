@@ -524,8 +524,8 @@ class InterpolateWindow(object):
 				gI[i].points[j].x = int((sourcePoint[0] + ((targetPoint[0] - sourcePoint[0]) * valueX/1000)) * self.scaleXValue/100)
 				gI[i].points[j].y = int((sourcePoint[1] + ((targetPoint[1] - sourcePoint[1]) * valueY/1000)) * self.scaleYValue/100)
 		if gI.components > 0:
-		    for i in range(len(gI.components)):
-		        gI.components[i].offset = ( int( (gS.components[i].offset[0] + ((gT.components[i].offset[0] - gS.components[i].offset[0]) * valueX/1000)) * self.scaleXValue/100 ), int( (gS.components[i].offset[1] + ((gT.components[i].offset[1] - gS.components[i].offset[1]) * valueX/1000)) * self.scaleXValue/100 ) )
+			for i in range(len(gI.components)):
+				gI.components[i].offset = ( int( (gS.components[i].offset[0] + ((gT.components[i].offset[0] - gS.components[i].offset[0]) * valueX/1000)) * self.scaleXValue/100 ), int( (gS.components[i].offset[1] + ((gT.components[i].offset[1] - gS.components[i].offset[1]) * valueX/1000)) * self.scaleXValue/100 ) )
 		gI.width = int((gS.width + ((gT.width - gS.width) * valueX/1000)) * self.scaleXValue/100)
 		return gI
 			
@@ -626,6 +626,25 @@ class InterpolateWindow(object):
 					else:
 						self.collaPolate(gS, gT, barIncrement)
 		self.newFont.update()
+		
+		master1_kerning = self.sourceFont.kerning
+		master2_kerning = self.targetFont.kerning
+		kerning1Items = master1_kerning.items()
+		kerning2Items = master2_kerning.items()
+		groups1Items = self.sourceFont.groups.items()
+		groups2Items = self.targetFont.groups.items()
+		
+		for (groupName1, grouppedGlyphs1) in groups1Items:
+			for (groupName2, grouppedGlyphs2) in groups2Items:
+				if groupName1 == groupName2 and grouppedGlyphs1 == grouppedGlyphs2:
+					self.newFont.groups[groupName1] = grouppedGlyphs1
+		
+		for (pair1, value1) in kerning1Items:
+			for (pair2, value2) in kerning2Items:
+				if pair1 == pair2:
+					interpolatedValue = int((value1 + value2) / 2)
+					self.newFont.kerning[pair1] = interpolatedValue
+		
 		self.w.bar.set(0)
 		 
 	def buttonCancelCallback(self, sender):
