@@ -642,7 +642,7 @@ class InterpolateWindow(object):
 		for (pair1, value1) in kerning1Items:
 			for (pair2, value2) in kerning2Items:
 				if pair1 == pair2:
-					interpolatedValue = int((value1 + value2) / 2)
+					interpolatedValue = int((value1 + value2) * (self.interpolateXValue))
 					self.newFont.kerning[pair1] = interpolatedValue
 		
 		self.w.bar.set(0)
