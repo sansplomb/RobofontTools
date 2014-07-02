@@ -44,8 +44,12 @@ def expandKerning(kerningItems):
 
 print 'expanding kerning...'
 myexpandedKerning = expandKerning(cachedKerning.items())
-print 'updating kerning...'	
-f.kerning.update(myexpandedKerning)
+print 'clearing kerning...'
+f.kerning.clear()
+print 'import new flat kerning...'	
+for pair, value in myexpandedKerning.iteritems():
+	f.kerning[pair] = value
+   #print pair, value
 print 'clearing groups...'	
 f.groups.clear()
 print 'DONE'
