@@ -1,0 +1,6 @@
+with FreeType:
+finished in 0.037723 seconds
+black: 66.2745098039 %
+with containsPoint:
+finished in 1.036176 seconds
+black: 70.2718454685 %
