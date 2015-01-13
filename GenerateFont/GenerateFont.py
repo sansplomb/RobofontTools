@@ -144,7 +144,7 @@ class GenerateWindow(BaseWindowController):
 		
 		(head, tail) = path.split(self.fontpath)
 		tail = tail[:-4]
-		tail += '_kern.ttf'
+		tail += '_kern.' + self.formatName
 		fontpath_kern = path.join(head, tail)
 		
 		tt = ttLib.TTFont(self.fontpath)
@@ -237,6 +237,7 @@ class GenerateWindow(BaseWindowController):
 				else:
 					#print 'none is group'
 					kernSubTable[pair] = value
+		print len(kernSubTable.keys())
 
 
 
