@@ -3,6 +3,7 @@ from fontTools import *
 from mojo.events import *
 from defconAppKit.windows.baseWindow import BaseWindowController
 from os import *
+import math
 
 
 class GenerateWindow(BaseWindowController):
@@ -149,25 +150,51 @@ class GenerateWindow(BaseWindowController):
 		
 		tt = ttLib.TTFont(self.fontpath)
 		myKernTable = ttLib.newTable('kern')
-		myKernSubTable = ttLib.tables._k_e_r_n.KernTable_format_0()
-		myKernSubTable.kernTable = {}
+		myKernTable.version = 0
+	#	myKernSubTable = ttLib.tables._k_e_r_n.KernTable_format_0()
+	#	myKernSubTable.kernTable = {}
 		
 		cachedKerning = f.kerning
-		self.parseKerning(f, cachedKerning.items(), myKernSubTable)
-
-		myKernSubTable.coverage = 1
-		myKernSubTable.format = 0
-		myKernSubTable.version = 0
-		myKernTable.kernTables = [myKernSubTable]
-		myKernTable.version = 0
+		allKerning = self.parseKerning(f, cachedKerning.items())
+		print len(allKerning)
+		listOfSubTables = []
+		for i in range(int(math.ceil(len(allKerning)/10920))):
+			listOfSubTables.append(allKerning[i*10920:(i+1)*10920])
+		print (len(listOfSubTables))
+				
+		#myKernSubTable.coverage = 1
+		#myKernSubTable.format = 0
+		#myKernSubTable.version = 0
+		#myKernTable.kernTables = [myKernSubTable]
+		#myKernTable.version = 0
+		
+		self.addKernSubTables(myKernTable, listOfSubTables)
 
 		tt['kern'] = myKernTable
 		tt.save(fontpath_kern)
 		remove(self.fontpath)
 		rename(fontpath_kern, self.fontpath)
+
+	def addKernSubTables(self, myKernTable, listOfSubTables):
+		myKernTable.kernTables = []
+		for subTable in listOfSubTables:
+			myKernSubTable = ttLib.tables._k_e_r_n.KernTable_format_0()
+			myKernSubTable.kernTable = {}
+			myKernSubTable.coverage = 1
+			myKernSubTable.format = 0
+			myKernSubTable.version = 0
+
+			for kernPair in subTable:
+				pair = kernPair[0]
+				value = kernPair[1]
+				myKernSubTable[pair] = value
+
+			myKernTable.kernTables.append(myKernSubTable)
+			
+
 		
-		
-	def parseKerning(self, f, kerningItems, kernSubTable):
+	def parseKerning(self, f, kerningItems):
+		allKerning = []
 		for (pair, value) in kerningItems:
 			if self.expandKern == True:
 				if pair[0][:1] == '@' and pair[1][:1] == '@':
@@ -181,7 +208,7 @@ class GenerateWindow(BaseWindowController):
 										#print f.groups[c_keyRight]
 										for gRightname in f.groups[c_keyRight]:
 											processedpair = (gLeftname, gRightname)
-											kernSubTable[processedpair] = value
+											allKerning.append((processedpair, value))
 		
 				elif pair[1][:1] == '@':
 					#print 'Right only is group'
@@ -190,7 +217,7 @@ class GenerateWindow(BaseWindowController):
 							#print f.groups[c_keyRight]
 							for gname in f.groups[c_keyRight]:
 								processedpair = (pair[0], gname)
-								kernSubTable[processedpair] = value
+								allKerning.append((processedpair, value))
 		
 				elif pair[0][:1] == '@':
 					#print 'Left only is group'
@@ -199,11 +226,11 @@ class GenerateWindow(BaseWindowController):
 							#print f.groups[c_keyLeft]
 							for gname in f.groups[c_keyLeft]:
 								processedpair = (gname, pair[1])
-								kernSubTable[processedpair] = value
+								allKerning.append((processedpair, value))
 						
 				else:
 					#print 'none is group'
-					kernSubTable[pair] = value
+					allKerning.append((pair, value))
 					
 			else:
 			#Do not expand group kerning, just use first item of group
@@ -216,7 +243,7 @@ class GenerateWindow(BaseWindowController):
 								if c_keyRight == pair[1]:
 									#print f.groups[c_keyRight]
 									processedpair = (f.groups[c_keyLeft][0], f.groups[c_keyRight][0])
-									kernSubTable[processedpair] = value
+									allKerning.append((processedpair, value))
 		
 				elif pair[1][:1] == '@':
 					#print 'Right only is group'
@@ -224,7 +251,7 @@ class GenerateWindow(BaseWindowController):
 						if c_keyRight == pair[1]:
 							#print f.groups[c_keyRight]
 							processedpair = (pair[0], f.groups[c_keyRight][0])
-							kernSubTable[processedpair] = value
+							allKerning.append((processedpair, value))
 		
 				elif pair[0][:1] == '@':
 					#print 'Left only is group'
@@ -232,12 +259,13 @@ class GenerateWindow(BaseWindowController):
 						if c_keyLeft == pair[0]:
 							#print f.groups[c_keyLeft]
 							processedpair = (f.groups[c_keyLeft][0], pair[1])
-							kernSubTable[processedpair] = value
+							allKerning.append((processedpair, value))
 						
 				else:
 					#print 'none is group'
-					kernSubTable[pair] = value
-		print len(kernSubTable.keys())
+					allKerning.append((pair, value))
+
+		return allKerning
 
 
 
