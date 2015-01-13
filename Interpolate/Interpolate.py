@@ -1,3 +1,4 @@
+# -*- coding: utf8 -*-
 from vanilla import *
 
 af = AllFonts()
@@ -52,21 +53,21 @@ class InterpolateWindow(object):
 			for glyphSet in self.savedGlyphSets.keys():
 				c_Font.lib["GlyphSets"][glyphSet] = self.savedGlyphSets[glyphSet]
 		
-		if len(af[self.fontSourceIndex].info.postscriptStemSnapH) != 0:
-			self.sourceRefX = af[self.fontSourceIndex].info.postscriptStemSnapH[0]
+		if len(af[self.fontSourceIndex].info.postscriptStemSnapV) != 0:
+			self.sourceRefX = af[self.fontSourceIndex].info.postscriptStemSnapV[0]
 		else:
 			self.sourceRefX = 0
-		if len(af[self.fontSourceIndex].info.postscriptStemSnapV) != 0:
-			self.sourceRefY = af[self.fontSourceIndex].info.postscriptStemSnapV[0]
+		if len(af[self.fontSourceIndex].info.postscriptStemSnapH) != 0:
+			self.sourceRefY = af[self.fontSourceIndex].info.postscriptStemSnapH[0]
 		else:
 			self.sourceRefY = 0
 			
-		if len(af[self.fontTargetIndex].info.postscriptStemSnapH) != 0:
-			self.targetRefX = af[self.fontTargetIndex].info.postscriptStemSnapH[0]
+		if len(af[self.fontTargetIndex].info.postscriptStemSnapV) != 0:
+			self.targetRefX = af[self.fontTargetIndex].info.postscriptStemSnapV[0]
 		else:
 			self.targetRefX = 0
-		if len(af[self.fontTargetIndex].info.postscriptStemSnapV) != 0:
-			self.targetRefY = af[self.fontTargetIndex].info.postscriptStemSnapV[0]
+		if len(af[self.fontTargetIndex].info.postscriptStemSnapH) != 0:
+			self.targetRefY = af[self.fontTargetIndex].info.postscriptStemSnapH[0]
 		else:
 			self.targetRefY = 0
 		
@@ -123,9 +124,12 @@ class InterpolateWindow(object):
 		self.w.foregroundTargetCheckBox = CheckBox((10, 110, 150, 20), "Use Layer",
 						   callback=self.foregroundTargetCheckBoxCallback, value=self.useTargetLayer)
 		
-		self.w.interpolateXTextBox = TextBox((10, 150, -10, 20), "Interpolate X")
-		self.w.interpolateXEditText = EditText((100, 150, 60, 20),
+		self.w.interpolateXTextBox = TextBox((10, 150, -10, 20), u"Interpolate X (‰)")
+		self.w.interpolateXEditText = EditText((120, 150, 60, 20),
 							callback=self.interpolateXEditTextCallback)
+		self.w.resultingStemXTextBox = TextBox((190, 150, -10, 20), u"Result Stem X (FU)")
+		self.w.resultingStemXEditText = EditText((310, 150, 60, 20),
+							callback=self.resultingStemXEditTextCallback)
 		self.w.interpolateXSlider = Slider((10, 180, -10, 23),
 							tickMarkCount=7,
 							value = 0,
@@ -133,9 +137,12 @@ class InterpolateWindow(object):
 							minValue = -1000,
 							callback=self.interpolateXSliderCallback)
 							
-		self.w.interpolateYTextBox = TextBox((10, 210, -10, 20), "Interpolate Y")
-		self.w.interpolateYEditText = EditText((100, 210, 60, 20),
+		self.w.interpolateYTextBox = TextBox((10, 210, -10, 20), u"Interpolate Y (‰)")
+		self.w.interpolateYEditText = EditText((120, 210, 60, 20),
 							callback=self.interpolateYEditTextCallback)
+		self.w.resultingStemYTextBox = TextBox((190, 210, -10, 20), u"Result Stem Y (FU)")
+		self.w.resultingStemYEditText = EditText((310, 210, 60, 20),
+							callback=self.resultingStemYEditTextCallback)
 		self.w.interpolateYSlider = Slider((10, 240, -10, 23),
 							tickMarkCount=7,
 							value = 0,
@@ -236,6 +243,25 @@ class InterpolateWindow(object):
 		self.w.interpolateYSlider.set(0)
 		self.w.scaleXSlider.set(100)
 		self.w.scaleYSlider.set(100)
+		self.w.resultingStemXEditText.set(0)
+		self.w.resultingStemYEditText.set(0)
+
+		self.interpolateXValue = 0
+		self.interpolateYValue = 0
+		self.scaleXValue = 100
+		self.scaleYValue = 100
+		self.keepStrokeXValue = 100
+		self.keepStrokeYValue = 100
+
+	def calculateResultingStem(self, minStem, maxStem, value):
+		if maxStem-minStem != 0:
+			return int(value/(1000.0/(maxStem-minStem))+minStem)
+		return 0
+
+	def calculateInterpolatValueFromResultingStem(self, minStem, maxStem, result):
+		if maxStem-minStem != 0:
+			return int((result-minStem)*(1000.0/(maxStem-minStem)))
+		return 0
 		
 	def keepStrokeXEditTextCallback(self, sender):
 		try:
@@ -339,10 +365,14 @@ class InterpolateWindow(object):
 		#print "slider edit!", sender.get()
 		self.interpolateXValue = int(sender.get())
 		self.w.interpolateXEditText.set(self.interpolateXValue)
+		stemX = self.calculateResultingStem(self.sourceRefX, self.targetRefX, self.interpolateXValue)
+		self.w.resultingStemXEditText.set(stemX)
 	
 	def interpolateYSliderCallback(self, sender):
 		self.interpolateYValue = int(sender.get())
 		self.w.interpolateYEditText.set(self.interpolateYValue)
+		stemY = self.calculateResultingStem(self.sourceRefY, self.targetRefY, self.interpolateYValue)
+		self.w.resultingStemYEditText.set(stemY)
 	
 	def setInterpolateX(self):
 		if self.keepStrokeX:
@@ -386,13 +416,13 @@ class InterpolateWindow(object):
 			self.sourceLayerName = self.sourceLayerList[0]
 		else:
 			self.sourceLayerName = "foreground"
-		if len(af[self.fontSourceIndex].info.postscriptStemSnapH) != 0:
-			self.sourceRefX = af[self.fontSourceIndex].info.postscriptStemSnapH[0]
+		if len(af[self.fontSourceIndex].info.postscriptStemSnapV) != 0:
+			self.sourceRefX = af[self.fontSourceIndex].info.postscriptStemSnapV[0]
 		else:
 			self.sourceRefX = 0
 		self.w.sourceRefXEditText.set(self.sourceRefX)
-		if len(af[self.fontSourceIndex].info.postscriptStemSnapV) != 0:
-			self.sourceRefY = af[self.fontSourceIndex].info.postscriptStemSnapV[0]
+		if len(af[self.fontSourceIndex].info.postscriptStemSnapH) != 0:
+			self.sourceRefY = af[self.fontSourceIndex].info.postscriptStemSnapH[0]
 		else:
 			self.sourceRefY = 0
 		self.w.sourceRefYEditText.set(self.sourceRefY)
@@ -407,13 +437,13 @@ class InterpolateWindow(object):
 			self.targetLayerName = self.targetLayerList[0]
 		else:
 			self.targetLayerName = "foreground"
-		if len(af[self.fontTargetIndex].info.postscriptStemSnapH) != 0:
-			self.targetRefX = af[self.fontTargetIndex].info.postscriptStemSnapH[0]
+		if len(af[self.fontTargetIndex].info.postscriptStemSnapV) != 0:
+			self.targetRefX = af[self.fontTargetIndex].info.postscriptStemSnapV[0]
 		else:
 			self.targetRefX = 0
 		self.w.targetRefXEditText.set(self.targetRefX)
-		if len(af[self.fontTargetIndex].info.postscriptStemSnapV) != 0:
-			self.targetRefY = af[self.fontTargetIndex].info.postscriptStemSnapV[0]
+		if len(af[self.fontTargetIndex].info.postscriptStemSnapH) != 0:
+			self.targetRefY = af[self.fontTargetIndex].info.postscriptStemSnapH[0]
 		else:
 			self.targetRefY = 0
 		self.w.targetRefYEditText.set(self.targetRefY)
@@ -476,6 +506,8 @@ class InterpolateWindow(object):
 				sender.set(0)
 		self.w.interpolateXSlider.set(newValue)
 		self.interpolateXValue = newValue
+		stemX = self.calculateResultingStem(self.sourceRefX, self.targetRefX, self.interpolateXValue)
+		self.w.resultingStemXEditText.set(stemX)
 		
 	def interpolateYEditTextCallback(self, sender):
 		try:
@@ -488,6 +520,32 @@ class InterpolateWindow(object):
 				sender.set(0)
 		self.w.interpolateYSlider.set(newValue)
 		self.interpolateYValue = newValue
+		stemY = self.calculateResultingStem(self.sourceRefY, self.targetRefY, self.interpolateYValue)
+		self.w.resultingStemYEditText.set(stemY)
+
+	def resultingStemXEditTextCallback(self, sender):
+		try:
+			newValue = int(sender.get())
+		except ValueError:
+			newValue = 0
+			sender.set(0)
+
+		interpolValue = self.calculateInterpolatValueFromResultingStem(self.sourceRefX, self.targetRefX, newValue)
+		self.w.interpolateXEditText.set(interpolValue)
+		self.w.interpolateXSlider.set(interpolValue)
+		self.interpolateXValue = interpolValue
+
+	def resultingStemYEditTextCallback(self, sender):
+		try:
+			newValue = int(sender.get())
+		except ValueError:
+			newValue = 0
+			sender.set(0)
+
+		interpolValue = self.calculateInterpolatValueFromResultingStem(self.sourceRefY, self.targetRefY, newValue)
+		self.w.interpolateYEditText.set(interpolValue)
+		self.w.interpolateYSlider.set(interpolValue)
+		self.interpolateYValue = interpolValue
 		
 	def scaleXEditTextCallback(self, sender):
 		try:
@@ -514,6 +572,12 @@ class InterpolateWindow(object):
 		self.w.scaleYSlider.set(newValue)
 		self.scaleYValue = newValue
 		self.setInterpolateY()
+		
+	def findMatchingIndexes(self, componentName, gS, gT):
+		for iS in range(len(gS.components)):
+			for iT in range(len(gT.components)):
+				if componentName == gS.components[iS].baseGlyph == gT.components[iT].baseGlyph:
+					return (iS, iT)
 	
 	def interpol(self, gS, gT, valueX, valueY):
 		gI = gS.copy()
@@ -525,7 +589,16 @@ class InterpolateWindow(object):
 				gI[i].points[j].y = int((sourcePoint[1] + ((targetPoint[1] - sourcePoint[1]) * valueY/1000)) * self.scaleYValue/100)
 		if gI.components > 0:
 			for i in range(len(gI.components)):
-				gI.components[i].offset = ( int( (gS.components[i].offset[0] + ((gT.components[i].offset[0] - gS.components[i].offset[0]) * valueX/1000)) * self.scaleXValue/100 ), int( (gS.components[i].offset[1] + ((gT.components[i].offset[1] - gS.components[i].offset[1]) * valueX/1000)) * self.scaleXValue/100 ) )
+				if gS.components[i].baseGlyph == gT.components[i].baseGlyph:
+					indexS = i
+					indexT = i
+				else:
+					(indexS, indexT) = self.findMatchingIndexes(gI.components[i].baseGlyph, gS, gT)
+					
+				if indexS != None and indexT != None:
+					gI.components[i].offset = ( int( (gS.components[indexS].offset[0] + ((gT.components[indexT].offset[0] - gS.components[indexS].offset[0]) * valueX/1000)) * self.scaleXValue/100 ), int( (gS.components[indexS].offset[1] + ((gT.components[indexT].offset[1] - gS.components[indexS].offset[1]) * valueX/1000)) * self.scaleXValue/100 ) )
+				else:
+					print 'ERROR: components not matching'
 		gI.width = int((gS.width + ((gT.width - gS.width) * valueX/1000)) * self.scaleXValue/100)
 		return gI
 			
@@ -636,15 +709,53 @@ class InterpolateWindow(object):
 		
 		for (groupName1, grouppedGlyphs1) in groups1Items:
 			for (groupName2, grouppedGlyphs2) in groups2Items:
+				grouppedGlyphs1.sort()
+				grouppedGlyphs2.sort()
 				if groupName1 == groupName2 and grouppedGlyphs1 == grouppedGlyphs2:
 					self.newFont.groups[groupName1] = grouppedGlyphs1
 		
+		newKerning = {}
 		for (pair1, value1) in kerning1Items:
-			for (pair2, value2) in kerning2Items:
-				if pair1 == pair2:
-					interpolatedValue = int((value1 + ((value2 - value1) * self.interpolateXValue/1000)) * self.scaleXValue/100)
-					self.newFont.kerning[pair1] = interpolatedValue
-		
+			#for (pair2, value2) in kerning2Items:
+			if pair1 in master2_kerning:
+				value2 = master2_kerning[pair1]
+				interpolatedValue = int((value1 + ((value2 - value1) * self.interpolateXValue/1000.0)) * self.scaleXValue/100.0)
+				#self.newFont.kerning[pair1] = interpolatedValue
+				newKerning[pair1] = interpolatedValue
+			else:
+				interpolatedValue = int((value1 * self.interpolateXValue/1000.0) * self.scaleXValue/100.0)
+				newKerning[pair1] = interpolatedValue
+		for (pair2, value2) in kerning2Items:
+			if pair2 not in master1_kerning:
+				interpolatedValue = int( (value2 * self.interpolateXValue/1000.0) * self.scaleXValue/100.0)
+				newKerning[pair2] = interpolatedValue
+
+		self.newFont.kerning.update(newKerning)
+
+		dictinfo = self.newFont.info.asDict()
+
+		for elem in sorted(dictinfo.keys()):
+			self.newFont.info.__setattr__(elem, self.sourceFont.info.__getattr__(elem))
+			if self.sourceFont.info.__getattr__(elem) != None:
+				#print(str(elem) + " = " + str(self.sourceFont.info.__getattr__(elem)))
+				if str(elem) in ["ascender", "capHeight", "descender", "xHeight", "openTypeHheaAscender", "openTypeHheaDescender", "openTypeHheaLineGap", "openTypeOS2TypoAscender", "openTypeOS2TypoDescender", "openTypeOS2TypoLineGap", "openTypeOS2WinAscent", "openTypeOS2WinDescent", ""]:
+					source = self.sourceFont.info.__getattr__(elem)
+					target = self.targetFont.info.__getattr__(elem)
+					interpolated = int((source + ((target - source) * self.interpolateYValue/1000.0)) * self.scaleYValue/100.0)
+					print str(elem), ': ', source, target, '-->', interpolated
+					self.newFont.info.__setattr__(elem, interpolated)
+				if str(elem) in ["postscriptBlueValues", "postscriptOtherBlues", "postscriptStemSnapH", "postscriptStemSnapV"]:
+					source = self.sourceFont.info.__getattr__(elem)
+					target = self.targetFont.info.__getattr__(elem)
+					interpolatedList = []
+					if len(source) == len(target):
+						for i in range(len(source)):
+							interpolated = int((source[i] + ((target[i] - source[i]) * self.interpolateYValue/1000.0)) * self.scaleYValue/100.0)
+							interpolatedList.append(interpolated)
+					print str(elem), ': ', source, target, '-->', interpolatedList
+					self.newFont.info.__setattr__(elem, interpolatedList)
+
+			
 		self.w.bar.set(0)
 		 
 	def buttonCancelCallback(self, sender):
