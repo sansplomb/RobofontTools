@@ -5,7 +5,7 @@ from defconAppKit.windows.baseWindow import BaseWindowController
 from AppKit import *
 
 import math
-from StemsAnalyserModule import *
+import StemsAnalyserModule as module
 
 minStemX = 20
 minStemY = 20
@@ -15,13 +15,13 @@ maxStemY = 400
 class WindowController(BaseWindowController):
 	
 	def __init__(self):
-		self.w = FloatingWindow((300, 240), "Stems Analyser")
+		self.w = FloatingWindow((400, 240), "Stems Analyser")
 		self.w.roundTo5CheckBox = CheckBox((10, 20, -10, 20), "Round Values to 5",
 						   callback=self.roundTo5CheckBoxCallback, value=True)
 		self.w.startButton = Button((10, 50, 170, 30), "Analyse Selected Glyphs", callback=self.startButtonCallBack)
-		self.w.xTextBox = TextBox((10, 90, -10, 17), "Horizontal (x):")
+		self.w.xTextBox = TextBox((10, 90, -10, 17), "Horizontal (Y):")
 		self.w.xValuesEditText = TextBox((10, 110, -10, 22))
-		self.w.yTextBox = TextBox((10, 140, -10, 17), "Vertical (y):")
+		self.w.yTextBox = TextBox((10, 140, -10, 17), "Vertical (X):")
 		self.w.yValuesEditText = TextBox((10, 160, -10, 22))
 		self.w.applyButton = Button((10, 200, 190, 30), "Copy to PS StemsSnap", callback=self.applyButtonCallBack)
 		self.w.stopButton = Button((210, 200, -10, 30), "Close", callback=self.stopButtonCallBack)
@@ -148,9 +148,9 @@ class WindowController(BaseWindowController):
 				(self.stemsListX, self.stemsListY) = makeStemsList(self.f, self.g_hPoints, g, self.ital)
 				if self.roundTo5 == 1:
 					for stem in self.stemsListX:
-						roundedStemsXList.append(roundbase(stem[2][0], 5))
+						roundedStemsXList.append(module.roundbase(stem[2][0], 5))
 					for stem in self.stemsListY:
-						roundedStemsYList.append(roundbase(stem[2][1], 5))	
+						roundedStemsYList.append(module.roundbase(stem[2][1], 5))	
 					
 					self.stemsValuesXList = roundedStemsXList
 					self.stemsValuesYList = roundedStemsYList
@@ -191,43 +191,41 @@ class WindowController(BaseWindowController):
 		#print 'y',valuesYDict
 		
 		keyValueXList = valuesXDict.items()
-		keyValueXList.sort(compare)
+		keyValueXList.sort(module.compare)
 		keyValueXList = keyValueXList[:12]
+
+		keyValueYList = valuesYDict.items()
+		keyValueYList.sort(module.compare)
+		keyValueYList = keyValueYList[:12]
 		
 		
 		for keyValue in keyValueXList:
-			self.stemSnapHList.append(keyValue[0])
-		#print 'stemSnapH', self.stemSnapHList
-		
-		stemSnapHText = ''
-		for i in self.stemSnapHList:
-			stemSnapHText += str(i) + ' '
-		self.w.xValuesEditText.set(stemSnapHText)
-		
-		keyValueYList = valuesYDict.items()
-		keyValueYList.sort(compare)
-		keyValueYList = keyValueYList[:12]
-		
-
-		for keyValue in keyValueYList:
 			self.stemSnapVList.append(keyValue[0])
-		#print 'stemSnapV', self.stemSnapVList
+		#print 'stemSnapH', self.stemSnapHList
 		
 		stemSnapVText = ''
 		for i in self.stemSnapVList:
 			stemSnapVText += str(i) + ' '
 		self.w.yValuesEditText.set(stemSnapVText)
+
+		for keyValue in keyValueYList:
+			self.stemSnapHList.append(keyValue[0])
+		#print 'stemSnapV', self.stemSnapVList
 		
+		stemSnapHText = ''
+		for i in self.stemSnapHList:
+			stemSnapHText += str(i) + ' '
+		self.w.xValuesEditText.set(stemSnapHText)
+
 		
-		addObserver(self, "draw", "draw")
-		addObserver(self, "draw", "drawBackground")	
+
+		addObserver(self, "draw", "draw")	
 		
 		self.progress.close()
 		
 		
 	def stopButtonCallBack(self, sender):
-		removeObserver(self, "draw")	
-		removeObserver(self, "drawBackground")
+		removeObserver(self, "draw")
 		self.w.close()
 
 ###################
@@ -254,10 +252,10 @@ def make_hPointsList(g):
 				nextPoint = contoursList[contour_index][point_index+1]
 			
 			if currentPoint.type != 'offCurve':
-				directionIN = direction(prevPoint, currentPoint)
-				directionOUT = direction(currentPoint, nextPoint)
-				vectorIN = angle(prevPoint, currentPoint)
-				vectorOUT = angle(currentPoint, nextPoint)
+				directionIN = module.direction(prevPoint, currentPoint)
+				directionOUT = module.direction(currentPoint, nextPoint)
+				vectorIN = module.angle(prevPoint, currentPoint)
+				vectorOUT = module.angle(currentPoint, nextPoint)
 				
 				hPoint = (currentPoint, contour_index, point_index, directionIN, directionOUT, vectorIN, vectorOUT)
 				hPointsList.append(hPoint)
@@ -268,7 +266,7 @@ def getColor(point1, point2, g):
 	hasSomeWhite = False
 	color = ''
 	if abs(point2.x - point1.x) < maxStemX or abs(point2.y - point1.y) < maxStemY:
-		hypothLength = int(hypothenuse(point1, point2))
+		hypothLength = int(module.hypothenuse(point1, point2))
 		for j in range(1, hypothLength-1):
 			cp_x = point1.x + ((j)/hypothLength)*(point2.x - point1.x)
 			cp_y = point1.y + ((j)/hypothLength)*(point2.y - point1.y) 
@@ -286,6 +284,8 @@ def getColor(point1, point2, g):
 	else:
 		color = 'White'
 	return color
+
+
 
 def makeStemsList(f, g_hPoints, g, italicAngle):
 	stemsListX_temp = []
@@ -306,47 +306,48 @@ def makeStemsList(f, g_hPoints, g, italicAngle):
 			angleOut_target = g_hPoints[target_hPoint][6]
 			color = getColor(sourcePoint, targetPoint, g)
 			if color == 'Black':
-				c_distance = distance(sourcePoint, targetPoint)
+				c_distance = module.distance(sourcePoint, targetPoint)
 				stem = (sourcePoint, targetPoint, c_distance)
-				hypoth = hypothenuse(sourcePoint, targetPoint)
+				hypoth = module.hypothenuse(sourcePoint, targetPoint)
 				## if Source and Target are almost aligned
-				if closeAngle(angleIn_source, angleIn_target) or closeAngle(angleOut_source, angleOut_target) or closeAngle(angleIn_source, angleOut_target) or closeAngle(angleOut_source, angleIn_target):
+				# closeAngle(angleIn_source, angleIn_target) or closeAngle(angleOut_source, angleOut_target) or 
+				if module.closeAngle(angleIn_source, angleOut_target) or module.closeAngle(angleOut_source, angleIn_target):
 					## if Source and Target have opposite direction
-					if opposite(directionIn_source, directionIn_target) or opposite(directionIn_source, directionOut_target) or opposite(directionOut_source, directionIn_target):
+					if module.opposite(directionIn_source, directionIn_target) or module.opposite(directionIn_source, directionOut_target) or module.opposite(directionOut_source, directionIn_target):
 						
 						## if they are horizontal, treat the stem on the Y axis
-						if (isHorizontal(angleIn_source) or isHorizontal(angleOut_source)) and (isHorizontal(angleIn_target) or isHorizontal(angleOut_target)):
-							if (minStemY < c_distance[1] < maxStemY):
+						if (module.isHorizontal(angleIn_source) or module.isHorizontal(angleOut_source)) and (module.isHorizontal(angleIn_target) or module.isHorizontal(angleOut_target)):
+							if (minStemY - 20*(minStemY/100) < c_distance[1] < maxStemY + 20*(maxStemY/100)) and (minStemY - 20*(minStemY/100) <= hypoth <= maxStemY + 20*(maxStemY/100)):
 								stemsListY_temp.append(stem)
 								
 						## if they are vertical, treat the stem on the X axis		
-						if (isVertical(angleIn_source) or isVertical(angleOut_source)) and (isVertical(angleIn_target) or isVertical(angleOut_target)):
+						if (module.isVertical(angleIn_source) or module.isVertical(angleOut_source)) and (module.isVertical(angleIn_target) or module.isVertical(angleOut_target)):
 							
-							if (minStemX <= c_distance[0] <= maxStemX):
+							if (minStemX - 20*(minStemX/100) <= c_distance[0] <= maxStemX + 20*(maxStemX/100)) and (minStemX - 20*(minStemX/100)<= hypoth <= maxStemX + 20*(maxStemX/100)):
 								stemsListX_temp.append(stem)
 	# avoid duplicates, filters temporary stems
 	yList = []
 	for stem in stemsListY_temp:
 		def pred0(y):
-			return approxEqual(stem[0].y, y)
+			return module.approxEqual(stem[0].y, y)
 		def pred1(y):
-			return approxEqual(stem[1].y, y)
-		if not exists(yList, pred0) or not exists(yList, pred1):
+			return module.approxEqual(stem[1].y, y)
+		if not module.exists(yList, pred0) or not module.exists(yList, pred1):
 			stemsListY.append(stem)
 			yList.append(stem[0].y)
 			yList.append(stem[1].y)
 
 	xList = []
 	for stem in stemsListX_temp:
-		(preRot0x, preRot0y) = rotated(stem[0], italicAngle)
-		(preRot1x, preRot1y) = rotated(stem[1], italicAngle)
+		(preRot0x, preRot0y) = module.rotated(stem[0], italicAngle)
+		(preRot1x, preRot1y) = module.rotated(stem[1], italicAngle)
 		def pred0(x):
 			#print preRot0x, x
-			return approxEqual(preRot0x, x)
+			return module.approxEqual(preRot0x, x)
 		def pred1(x):
 			#print preRot1x, x
-			return approxEqual(preRot1x, x)
-		if not exists(xList,pred0) or not exists(xList,pred1):
+			return module.approxEqual(preRot1x, x)
+		if not module.exists(xList,pred0) or not module.exists(xList,pred1):
 			stemsListX.append(stem)
 			xList.append(preRot0x)
 			xList.append(preRot1x)
@@ -395,6 +396,8 @@ maxStemY = maxX + 10*(maxX/100)
 	#print 'minX', minStemX, 'maxX', maxStemX
 	#print 'minY', minStemY, 'maxY', maxStemY		
 ################
+
+reload(module)
 
 WindowController()
 		

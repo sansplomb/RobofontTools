@@ -8,7 +8,7 @@
 			<key>path</key>
 			<string>StemsAnalyser.py</string>
 			<key>preferredName</key>
-			<string>Stems Analyser</string>
+			<string>StemsAnalyser</string>
 			<key>shortKey</key>
 			<string></string>
 		</dict>
@@ -26,7 +26,7 @@
 	<key>name</key>
 	<string>StemsAnalyser</string>
 	<key>timeStamp</key>
-	<real>1396437143.106701</real>
+	<real>1421143668.8228281</real>
 	<key>version</key>
 	<string>1.0</string>
 </dict>

@@ -59,7 +59,8 @@ def closeAngle(angle1, angle2):
 	return (abs(diff)<5)
 
 def approxEqual(a1, a2):
-	return (abs(a1 - a2) < 10)
+	#return abs(a1 - a2) < 10*(abs(a1)/100)
+	return ( abs(a1 - a2) <= 10*(abs(a1)/100) )
 
 def opposite(direction1, direction2):
 	isOpposite = False
@@ -75,7 +76,7 @@ def opposite(direction1, direction2):
 	
 def isVertical(vector):
 	vector = abs(vector)
-	if ((45 < vector) and (vector < 135)):
+	if ((65 < vector) and (vector < 115)):
 		return True
 	else:
 		return False
